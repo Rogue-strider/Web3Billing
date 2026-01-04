@@ -1,0 +1,11 @@
+import SubscriptionManagerArtifact from "../../../blockchain-ethereum/artifacts/contracts/SubscriptionManager.sol/SubscriptionManager.json";
+
+export const contracts = {
+  ethereum: {
+    chainId: 31337, // hardhat localhost
+    subscriptionManager: {
+      address: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      abi: SubscriptionManagerArtifact.abi, // ✅ ONLY THIS
+    },
+  },
+};
