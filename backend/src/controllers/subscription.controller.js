@@ -70,7 +70,9 @@ export const getMySubscriptions = async (req, res) => {
     .populate("plan", "name price interval")
     .populate("merchant", "businessName");
 
-  res.json(subs);
+  res.status(200).json({
+    subscriptions: subs,
+  });
 };
 
 /* =========================

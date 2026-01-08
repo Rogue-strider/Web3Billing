@@ -61,7 +61,7 @@ const Dashboard = () => {
         const res = await getMySubscriptions();
 
         const subs =
-          res?.data?.subscriptions || res?.data?.data || res?.data || [];
+          res?.data?.subscriptions  || [];
 
         setSubscriptions(Array.isArray(subs) ? subs : []);
       } catch (err) {
