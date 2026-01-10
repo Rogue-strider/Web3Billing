@@ -42,30 +42,38 @@ export const startEthereumListeners = () => {
         });
         if (!plan) return console.error("❌ Plan not found");
 
-        await Subscription.findOneAndUpdate(
+        // 🔥 STEP 1: purane active subscriptions band karo
+        await Subscription.updateMany(
           {
             user: user._id,
-            plan: plan._id, // 🔥 THIS IS THE FIX
-          },
-          {
-            user: user._id,
-            merchant: merchant._id,
             plan: plan._id,
             status: "active",
-            currentPeriodStart: new Date(Number(startTime) * 1000),
-            currentPeriodEnd: new Date(Number(endTime) * 1000),
-            chain: "ethereum",
-            onChainSubscriptionId: subscriptionId.toString(),
           },
-          { upsert: true, new: true }
+          {
+            $set: { status: "cancelled" },
+          }
         );
 
-        console.log("✅ Subscription saved / updated");
+        // 🔥 STEP 2: hamesha NAYA subscription banao
+        await Subscription.create({
+          user: user._id,
+          merchant: merchant._id,
+          plan: plan._id,
+          status: "active",
+          cancelAtPeriodEnd: false, // ✅ RESET
+          currentPeriodStart: new Date(Number(startTime) * 1000),
+          currentPeriodEnd: new Date(Number(endTime) * 1000),
+          chain: "ethereum",
+          onChainSubscriptionId: subscriptionId.toString(),
+        });
+
+        console.log("✅ New subscription created");
       } catch (err) {
         console.error("❌ Subscribed listener error:", err);
       }
     }
   );
+
 
 
   subscriptionContract.on(

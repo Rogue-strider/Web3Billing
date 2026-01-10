@@ -61,6 +61,7 @@ import { WEBHOOK_EVENTS } from "../utils/webhookEvents.js";
 //     subscription,
 //   });
 // };
+
 export const createSubscription = async (req, res) => {
   const { planId } = req.body;
 
@@ -75,7 +76,7 @@ export const createSubscription = async (req, res) => {
 
   const merchant = await Merchant.findById(plan.merchant);
 
-  // 🔥 STEP 1: close any existing active subscription for this plan
+  // ✅ STEP 1: close ALL existing active subscriptions for this user + plan
   await Subscription.updateMany(
     {
       user: req.user.userId,
@@ -85,11 +86,12 @@ export const createSubscription = async (req, res) => {
     {
       $set: {
         status: "cancelled",
+        cancelAtPeriodEnd: false,
       },
     }
   );
 
-  // 🔥 STEP 2: create fresh subscription
+  // ✅ STEP 2: create FRESH subscription
   const now = new Date();
   const periodEnd = new Date(now);
 
@@ -106,29 +108,87 @@ export const createSubscription = async (req, res) => {
     currentPeriodStart: now,
     currentPeriodEnd: periodEnd,
     status: "active",
-    cancelAtPeriodEnd: false, // ✅ ALWAYS reset
+    cancelAtPeriodEnd: false, // 🔥 ALWAYS FALSE on new sub
     chain: plan.chain,
-    onChainSubscriptionId: Date.now().toString(), // temp unique
+    onChainSubscriptionId: Date.now().toString(),
   });
-
-  if (merchant.webhookUrl) {
-    await sendWebhook({
-      url: merchant.webhookUrl,
-      event: WEBHOOK_EVENTS.SUBSCRIPTION_CREATED,
-      payload: {
-        subscriptionId: subscription._id,
-        planId: plan._id,
-        user: req.user.wallet,
-        periodEnd: subscription.currentPeriodEnd,
-      },
-    });
-  }
 
   res.status(201).json({
     message: "Subscription created",
     subscription,
   });
 };
+
+
+
+// export const createSubscription = async (req, res) => {
+//   const { planId } = req.body;
+
+//   if (!planId) {
+//     return res.status(400).json({ message: "Plan ID required" });
+//   }
+
+//   const plan = await Plan.findById(planId);
+//   if (!plan || !plan.isActive) {
+//     return res.status(404).json({ message: "Plan not available" });
+//   }
+
+//   const merchant = await Merchant.findById(plan.merchant);
+
+//   // 🔥 STEP 1: close any existing active subscription for this plan
+//   await Subscription.updateMany(
+//     {
+//       user: req.user.userId,
+//       plan: plan._id,
+//       status: "active",
+//     },
+//     {
+//       $set: {
+//         status: "cancelled",
+//       },
+//     }
+//   );
+
+//   // 🔥 STEP 2: create fresh subscription
+//   const now = new Date();
+//   const periodEnd = new Date(now);
+
+//   if (plan.interval === "monthly") {
+//     periodEnd.setMonth(periodEnd.getMonth() + 1);
+//   } else {
+//     periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+//   }
+
+//   const subscription = await Subscription.create({
+//     user: req.user.userId,
+//     merchant: merchant._id,
+//     plan: plan._id,
+//     currentPeriodStart: now,
+//     currentPeriodEnd: periodEnd,
+//     status: "active",
+//     cancelAtPeriodEnd: false, // ✅ ALWAYS reset
+//     chain: plan.chain,
+//     onChainSubscriptionId: Date.now().toString(), // temp unique
+//   });
+
+//   if (merchant.webhookUrl) {
+//     await sendWebhook({
+//       url: merchant.webhookUrl,
+//       event: WEBHOOK_EVENTS.SUBSCRIPTION_CREATED,
+//       payload: {
+//         subscriptionId: subscription._id,
+//         planId: plan._id,
+//         user: req.user.wallet,
+//         periodEnd: subscription.currentPeriodEnd,
+//       },
+//     });
+//   }
+
+//   res.status(201).json({
+//     message: "Subscription created",
+//     subscription,
+//   });
+// };
 
 
 /* =========================
