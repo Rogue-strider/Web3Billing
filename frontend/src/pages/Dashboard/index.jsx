@@ -340,7 +340,11 @@ const Dashboard = () => {
     (sub) => sub.status === "active" && sub.cancelAtPeriodEnd === true
   );
 
-  const historySubs = subscriptions.filter((sub) => sub.status === "expired");
+  const historySubs = subscriptions.filter(
+    (sub) =>
+      sub.status === "expired" ||
+      (sub.status === "active" && sub.cancelAtPeriodEnd)
+  );
   /* =======================
      CANCEL HANDLER
   ======================= */
