@@ -7,10 +7,12 @@ import Merchant from "../../models/Merchant.model.js";
 export const startEthereumListeners = () => {
   console.log("👂 Listening to Ethereum events...");
 
+  // safety: duplicate listeners remove
   subscriptionContract.removeAllListeners();
 
   /* ===============================
      SUBSCRIBED EVENT
+     (Create OR Reactivate subscription)
   =============================== */
   subscriptionContract.on(
     "Subscribed",
@@ -24,58 +26,60 @@ export const startEthereumListeners = () => {
       event
     ) => {
       try {
-        console.log("🟢 Subscribed EVENT:", subscriptionId.toString());
+        console.log(
+          "🟢 Subscribed EVENT:",
+          subscriptionId.toString(),
+          event.log.transactionHash
+        );
 
         const user = await User.findOne({
           walletAddress: userWallet.toLowerCase(),
         });
-        if (!user) return;
+        if (!user) return console.error("User not found");
 
         const merchant = await Merchant.findOne({
           payoutWallet: merchantWallet.toLowerCase(),
         });
-        if (!merchant) return;
+        if (!merchant) return console.error("Merchant not found");
 
         const plan = await Plan.findOne({
           onChainPlanId: planId.toString(),
         });
-        if (!plan) return;
+        if (!plan) return console.error("Plan not found");
 
-        // 🔥 STEP 1: user ke saare ACTIVE subs ko expire karo
-        await Subscription.updateMany(
+        /**
+         * 🔑 CORE FIX
+         * onChainSubscriptionId UNIQUE hota hai
+         * isliye CREATE nahi, UPSERT karna hai
+         */
+        await Subscription.findOneAndUpdate(
+          { onChainSubscriptionId: subscriptionId.toString() },
           {
             user: user._id,
+            merchant: merchant._id,
             plan: plan._id,
             status: "active",
+            cancelAtPeriodEnd: false,
+            currentPeriodStart: new Date(Number(startTime) * 1000),
+            currentPeriodEnd: new Date(Number(endTime) * 1000),
+            chain: "ethereum",
           },
           {
-            $set: { status: "expired" },
+            upsert: true,
+            new: true,
           }
         );
 
-        // 🔥 STEP 2: NAYA subscription record (history safe)
-        await Subscription.create({
-          user: user._id,
-          merchant: merchant._id,
-          plan: plan._id,
-          status: "active",
-          cancelAtPeriodEnd: false,
-          currentPeriodStart: new Date(Number(startTime) * 1000),
-          currentPeriodEnd: new Date(Number(endTime) * 1000),
-          chain: "ethereum",
-          onChainSubscriptionId: subscriptionId.toString(),
-        });
-
-        console.log("✅ New subscription created (history preserved)");
+        console.log("✅ Subscription upserted (active)");
       } catch (err) {
         console.error("❌ Subscribed listener error:", err.message);
       }
     }
   );
 
-
   /* ===============================
      CANCELLED EVENT
+     (Mark subscription cancelled)
   =============================== */
   subscriptionContract.on(
     "SubscriptionCancelled",
@@ -98,7 +102,7 @@ export const startEthereumListeners = () => {
 
         console.log("✅ Subscription marked cancelled");
       } catch (err) {
-        console.error("❌ Cancel listener error:", err);
+        console.error("❌ Cancel listener error:", err.message);
       }
     }
   );
