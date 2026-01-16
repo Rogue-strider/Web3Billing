@@ -8,6 +8,8 @@ import {
 } from "../../services/subscription.service";
 import toast from "react-hot-toast";
 import { socket } from "../../services/socket";
+import MRRChart from "../../components/charts/MRRChart";
+import ActiveSubsChart from "../../components/charts/ActiveSubsChart";
 
 const Dashboard = () => {
   const { isConnected, authReady, account } = useContext(WalletContext);
@@ -24,6 +26,11 @@ const Dashboard = () => {
     churnRate: 0,
   });
 
+  const [charts, setCharts] = useState({
+    mrrOverTime: [],
+    activeSubsOverTime: [],
+  });
+
   /* =======================
      LOAD SUBSCRIPTIONS (API)
   ======================= */
@@ -34,9 +41,7 @@ const Dashboard = () => {
       try {
         const res = await getMySubscriptions();
         setSubscriptions(
-          Array.isArray(res?.data?.subscriptions)
-            ? res.data.subscriptions
-            : []
+          Array.isArray(res?.data?.subscriptions) ? res.data.subscriptions : []
         );
       } catch (err) {
         toast.error("Failed to load subscriptions");
@@ -74,6 +79,10 @@ const Dashboard = () => {
     /* 🔥 STATS UPDATE */
     socket.on("stats:update", (liveStats) => {
       setStats(liveStats);
+    });
+
+    socket.on("charts:update", (data) => {
+      setCharts(data);
     });
 
     return () => {
@@ -217,6 +226,21 @@ const Dashboard = () => {
           })}
         </div>
 
+        {/* CHARTS */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16">
+          <div className="bg-gray-900 bg-opacity-40 p-6 rounded-xl border border-white border-opacity-10">
+            <h3 className="text-xl font-semibold mb-4">MRR Over Time</h3>
+            <MRRChart data={charts.mrrOverTime} />
+          </div>
+
+          <div className="bg-gray-900 bg-opacity-40 p-6 rounded-xl border border-white border-opacity-10">
+            <h3 className="text-xl font-semibold mb-4">
+              Active Subscribers Over Time
+            </h3>
+            <ActiveSubsChart data={charts.activeSubsOverTime} />
+          </div>
+        </div>
+
         {/* ACTIVE / CANCELLING */}
         <div className="mt-16">
           <h2 className="text-3xl font-bold mb-6">My Subscriptions</h2>
@@ -265,8 +289,7 @@ const Dashboard = () => {
               >
                 <p className="font-semibold">Plan: {sub.plan?.name}</p>
                 <p className="text-sm text-gray-400">
-                  Expired on:{" "}
-                  {new Date(sub.currentPeriodEnd).toLocaleString()}
+                  Expired on: {new Date(sub.currentPeriodEnd).toLocaleString()}
                 </p>
               </div>
             ))}
