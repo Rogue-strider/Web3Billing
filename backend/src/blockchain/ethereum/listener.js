@@ -3,17 +3,19 @@ import Subscription from "../../models/Subscription.model.js";
 import Plan from "../../models/Plan.model.js";
 import User from "../../models/User.model.js";
 import Merchant from "../../models/Merchant.model.js";
+import { io } from "../../server.js";
+import { getLiveStats } from "../../services/stats.service.js";
+
+// const stats = await getLiveStats();
+// io.emit("stats:update", stats);
+
 
 export const startEthereumListeners = () => {
   console.log("👂 Listening to Ethereum events...");
 
-  // safety: duplicate listeners remove
   subscriptionContract.removeAllListeners();
 
-  /* ===============================
-     SUBSCRIBED EVENT
-     (Create OR Reactivate subscription)
-  =============================== */
+  /* ===== SUBSCRIBED ===== */
   subscriptionContract.on(
     "Subscribed",
     async (
@@ -22,37 +24,31 @@ export const startEthereumListeners = () => {
       merchantWallet,
       planId,
       startTime,
-      endTime,
-      event
+      endTime
     ) => {
       try {
-        console.log(
-          "🟢 Subscribed EVENT:",
-          subscriptionId.toString(),
-          event.log.transactionHash
-        );
+        console.log("🟢 Subscribed:", subscriptionId.toString());
 
         const user = await User.findOne({
           walletAddress: userWallet.toLowerCase(),
         });
-        if (!user) return console.error("User not found");
+        if (!user) return;
 
         const merchant = await Merchant.findOne({
           payoutWallet: merchantWallet.toLowerCase(),
         });
-        if (!merchant) return console.error("Merchant not found");
+        if (!merchant) return;
 
         const plan = await Plan.findOne({
           onChainPlanId: planId.toString(),
         });
-        if (!plan) return console.error("Plan not found");
+        if (!plan) return;
 
         /**
-         * 🔑 CORE FIX
-         * onChainSubscriptionId UNIQUE hota hai
-         * isliye CREATE nahi, UPSERT karna hai
+         * 🔥 MOST IMPORTANT FIX
+         * SAME onChainSubscriptionId → UPSERT
          */
-        await Subscription.findOneAndUpdate(
+        const subscription = await Subscription.findOneAndUpdate(
           { onChainSubscriptionId: subscriptionId.toString() },
           {
             user: user._id,
@@ -70,40 +66,45 @@ export const startEthereumListeners = () => {
           }
         );
 
-        console.log("✅ Subscription upserted (active)");
+         io.to(user._id.toString()).emit("subscription:created", {
+           subscription,
+         });
+
+         /* ===== GLOBAL STATS UPDATE ===== */
+         const stats = await getLiveStats();
+         io.emit("stats:update", stats);
+
+        console.log("✅ Subscription upserted safely");
       } catch (err) {
-        console.error("❌ Subscribed listener error:", err.message);
+        console.error("❌ Subscribed error:", err.message);
       }
     }
   );
 
-  /* ===============================
-     CANCELLED EVENT
-     (Mark subscription cancelled)
-  =============================== */
-  subscriptionContract.on(
-    "SubscriptionCancelled",
-    async (subscriptionId, user, event) => {
-      try {
-        console.log(
-          "🔴 Subscription cancelled:",
-          subscriptionId.toString(),
-          "tx:",
-          event.log.transactionHash
-        );
+  /* ===== CANCELLED ===== */
+  subscriptionContract.on("SubscriptionCancelled", async (subscriptionId) => {
+    try {
+      const subscription = await Subscription.findOneAndUpdate(
+        { onChainSubscriptionId: subscriptionId.toString() },
+        {
+          status: "cancelled",
+          cancelAtPeriodEnd: true,
+        },
+        { new: true }
+      );
 
-        await Subscription.findOneAndUpdate(
-          { onChainSubscriptionId: subscriptionId.toString() },
-          {
-            status: "cancelled",
-            cancelAtPeriodEnd: true,
-          }
-        );
+      if (!subscription) return;
 
-        console.log("✅ Subscription marked cancelled");
-      } catch (err) {
-        console.error("❌ Cancel listener error:", err.message);
-      }
+      io.to(subscription.user.toString()).emit("subscription:cancelled", {
+        subscription,
+      });
+
+      const stats = await getLiveStats();
+      io.emit("stats:update", stats);
+
+      console.log("🔴 Subscription cancelled + socket emitted");
+    } catch (err) {
+      console.error("❌ Cancel error:", err.message);
     }
-  );
+  });
 };
