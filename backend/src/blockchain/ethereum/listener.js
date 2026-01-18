@@ -5,10 +5,7 @@ import User from "../../models/User.model.js";
 import Merchant from "../../models/Merchant.model.js";
 import { io } from "../../server.js";
 import { getLiveStats } from "../../services/stats.service.js";
-
-// const stats = await getLiveStats();
-// io.emit("stats:update", stats);
-
+import { getDashboardCharts } from "../../services/charts.service.js";
 
 export const startEthereumListeners = () => {
   console.log("👂 Listening to Ethereum events...");
@@ -65,14 +62,16 @@ export const startEthereumListeners = () => {
             new: true,
           }
         );
-
-         io.to(user._id.toString()).emit("subscription:created", {
-           subscription,
-         });
-
-         /* ===== GLOBAL STATS UPDATE ===== */
-         const stats = await getLiveStats();
-         io.emit("stats:update", stats);
+        
+        io.to(user._id.toString()).emit("subscription:created", {
+          subscription,
+        });
+        
+        const charts = await getDashboardCharts();
+        io.emit("charts:update", charts);
+        /* ===== GLOBAL STATS UPDATE ===== */
+        const stats = await getLiveStats();
+        io.emit("stats:update", stats);
 
         console.log("✅ Subscription upserted safely");
       } catch (err) {
@@ -98,6 +97,8 @@ export const startEthereumListeners = () => {
       io.to(subscription.user.toString()).emit("subscription:cancelled", {
         subscription,
       });
+      const charts = await getDashboardCharts();
+      io.emit("charts:update", charts);
 
       const stats = await getLiveStats();
       io.emit("stats:update", stats);
