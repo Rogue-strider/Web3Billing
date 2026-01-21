@@ -17,6 +17,7 @@ import subscriptionRoutes from "./routes/subscription.route.js";
 
 import { startSubscriptionExpiryJob } from "./jobs/subscriptionExpiry.job.js";
 import { startEthereumListeners } from "./blockchain/ethereum/listener.js";
+import { getDashboardCharts } from "./services/charts.service.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -31,6 +32,11 @@ export const io = new Server(server, {
 
 io.on("connection", (socket) => {
   console.log("🟢 Socket connected:", socket.id);
+
+  socket.on("charts:range", async (range) => {
+    const charts = await getDashboardCharts(range);
+    socket.emit("charts:update", charts);
+  });
 
   socket.on("join", (userId) => {
     socket.join(userId);

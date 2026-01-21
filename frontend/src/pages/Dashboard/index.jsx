@@ -41,7 +41,7 @@ const Dashboard = () => {
       try {
         const res = await getMySubscriptions();
         setSubscriptions(
-          Array.isArray(res?.data?.subscriptions) ? res.data.subscriptions : []
+          Array.isArray(res?.data?.subscriptions) ? res.data.subscriptions : [],
         );
       } catch (err) {
         toast.error("Failed to load subscriptions");
@@ -59,6 +59,7 @@ const Dashboard = () => {
 
     socket.connect();
     socket.emit("join", account.toLowerCase());
+    socket.emit("charts:range", "30d");
 
     /* SUB CREATED */
     socket.on("subscription:created", ({ subscription }) => {
@@ -72,7 +73,7 @@ const Dashboard = () => {
     /* SUB CANCELLED */
     socket.on("subscription:cancelled", ({ subscription }) => {
       setSubscriptions((prev) =>
-        prev.map((s) => (s._id === subscription._id ? subscription : s))
+        prev.map((s) => (s._id === subscription._id ? subscription : s)),
       );
     });
 
@@ -96,17 +97,17 @@ const Dashboard = () => {
      SPLIT SUBSCRIPTIONS
   ======================= */
   const activeSubs = subscriptions.filter(
-    (sub) => sub.status === "active" && !sub.cancelAtPeriodEnd
+    (sub) => sub.status === "active" && !sub.cancelAtPeriodEnd,
   );
 
   const cancellingSubs = subscriptions.filter(
-    (sub) => sub.status === "active" && sub.cancelAtPeriodEnd
+    (sub) => sub.status === "active" && sub.cancelAtPeriodEnd,
   );
 
   const historySubs = subscriptions.filter(
     (sub) =>
       sub.status === "expired" ||
-      (sub.status === "active" && sub.cancelAtPeriodEnd)
+      (sub.status === "active" && sub.cancelAtPeriodEnd),
   );
 
   /* =======================
@@ -119,8 +120,8 @@ const Dashboard = () => {
 
       setSubscriptions((prev) =>
         prev.map((s) =>
-          s._id === sub._id ? { ...s, cancelAtPeriodEnd: true } : s
-        )
+          s._id === sub._id ? { ...s, cancelAtPeriodEnd: true } : s,
+        ),
       );
     } catch (err) {
       toast.error(err?.response?.data?.message || "Cancel failed");
@@ -226,18 +227,32 @@ const Dashboard = () => {
           })}
         </div>
 
+        <div className="flex gap-3 mb-6">
+          {["7d", "30d", "90d", "all"].map((r) => (
+            <button
+              key={r}
+              onClick={() => {
+                socket.emit("charts:range", r);
+              }}
+              className="px-4 py-2 rounded-lg bg-gray-800 hover:bg-purple-600 transition"
+            >
+              {r.toUpperCase()}
+            </button>
+          ))}
+        </div>
+
         {/* CHARTS */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16">
           <div className="bg-gray-900 bg-opacity-40 p-6 rounded-xl border border-white border-opacity-10">
             <h3 className="text-xl font-semibold mb-4">MRR Over Time</h3>
-            <MRRChart data={charts.mrrOverTime} />
+            <MRRChart data={charts.mrrOverTime || []} />
           </div>
 
           <div className="bg-gray-900 bg-opacity-40 p-6 rounded-xl border border-white border-opacity-10">
             <h3 className="text-xl font-semibold mb-4">
               Active Subscribers Over Time
             </h3>
-            <ActiveSubsChart data={charts.activeSubsOverTime} />
+            <ActiveSubsChart data={charts.activeSubsOverTime || []} />
           </div>
         </div>
 

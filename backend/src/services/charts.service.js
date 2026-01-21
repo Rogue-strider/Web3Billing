@@ -1,15 +1,24 @@
 // backend/src/services/charts.service.js
 import Subscription from "../models/Subscription.model.js";
 
-export const getDashboardCharts = async () => {
+export const getDashboardCharts = async (range = "30d") => {
+  let days = 30;
+  if (range === "7d") days = 7;
+  if (range === "90d") days = 90;
+  if (range === "all") days = 3650;
+
+  const fromDate = new Date();
+  fromDate.setDate(fromDate.getDate() - days);
   /* =========================
      MRR OVER TIME (daily)
   ========================= */
+
   const rawMRR = await Subscription.aggregate([
     {
       $match: {
         status: "active",
         cancelAtPeriodEnd: false,
+        createdAt: { $gte: fromDate },
       },
     },
     {

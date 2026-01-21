@@ -63,21 +63,24 @@ export const startEthereumListeners = () => {
           }
         );
         
-        io.to(user._id.toString()).emit("subscription:created", {
+        io.to(user.walletAddress.toLowerCase()).emit("subscription:created", {
           subscription,
         });
         
-        const charts = await getDashboardCharts();
+        const charts = await getDashboardCharts("30d");
         io.emit("charts:update", charts);
         /* ===== GLOBAL STATS UPDATE ===== */
         const stats = await getLiveStats();
         io.emit("stats:update", stats);
+
+        
 
         console.log("✅ Subscription upserted safely");
       } catch (err) {
         console.error("❌ Subscribed error:", err.message);
       }
     }
+    
   );
 
   /* ===== CANCELLED ===== */
