@@ -21,7 +21,7 @@ export const startEthereumListeners = () => {
       merchantWallet,
       planId,
       startTime,
-      endTime
+      endTime,
     ) => {
       try {
         console.log("🟢 Subscribed:", subscriptionId.toString());
@@ -41,63 +41,66 @@ export const startEthereumListeners = () => {
         });
         if (!plan) return;
 
-        /**
-         * 🔥 MOST IMPORTANT FIX
-         * SAME onChainSubscriptionId → UPSERT
-         */
-        const subscription = await Subscription.findOneAndUpdate(
-          { onChainSubscriptionId: subscriptionId.toString() },
+        /* 🔥 expire old subscriptions of same plan */
+        await Subscription.updateMany(
           {
             user: user._id,
-            merchant: merchant._id,
             plan: plan._id,
             status: "active",
-            cancelAtPeriodEnd: false,
-            currentPeriodStart: new Date(Number(startTime) * 1000),
-            currentPeriodEnd: new Date(Number(endTime) * 1000),
-            chain: "ethereum",
           },
-          {
-            upsert: true,
-            new: true,
-          }
+          { status: "expired" },
         );
-        
+
+        /* ✅ ALWAYS CREATE NEW SUBSCRIPTION */
+        const subscription = await Subscription.create({
+          user: user._id,
+          merchant: merchant._id,
+          plan: plan._id,
+          status: "active",
+          cancelAtPeriodEnd: false,
+          currentPeriodStart: new Date(Number(startTime) * 1000),
+          currentPeriodEnd: new Date(Number(endTime) * 1000),
+          chain: "ethereum",
+          onChainSubscriptionId: subscriptionId.toString(),
+        });
+
+        /* user room (wallet based) */
         io.to(user.walletAddress.toLowerCase()).emit("subscription:created", {
           subscription,
         });
-        
+
+        /* charts + stats */
         const charts = await getDashboardCharts("30d");
         io.emit("charts:update", charts);
-        /* ===== GLOBAL STATS UPDATE ===== */
+
         const stats = await getLiveStats();
         io.emit("stats:update", stats);
 
-        
-
-        console.log("✅ Subscription upserted safely");
+        console.log("✅ Subscription created cleanly");
       } catch (err) {
         console.error("❌ Subscribed error:", err.message);
       }
-    }
-    
+    },
   );
 
   /* ===== CANCELLED ===== */
   subscriptionContract.on("SubscriptionCancelled", async (subscriptionId) => {
     try {
       const subscription = await Subscription.findOneAndUpdate(
-        { onChainSubscriptionId: subscriptionId.toString() },
+        {
+          onChainSubscriptionId: subscriptionId.toString(),
+          status: "active",
+        },
         {
           status: "cancelled",
           cancelAtPeriodEnd: true,
         },
-        { new: true }
+        { new: true },
       );
 
-      if (!subscription) return;
+      const user = await User.findById(subscription.user);
 
-      io.to(subscription.user.toString()).emit("subscription:cancelled", {
+      io.to(user.walletAddress.toLowerCase()).emit("subscription:cancelled", {
         subscription,
       });
       const charts = await getDashboardCharts();

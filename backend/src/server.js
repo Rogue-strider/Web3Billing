@@ -46,6 +46,11 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log("🔴 Socket disconnected:", socket.id);
   });
+  
+  socket.on("charts:range", async (range) => {
+    const charts = await getDashboardCharts(range);
+    socket.emit("charts:update", charts);
+  });
 });
 
 /* ================= MIDDLEWARE ================= */

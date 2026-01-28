@@ -97,17 +97,16 @@ const Dashboard = () => {
      SPLIT SUBSCRIPTIONS
   ======================= */
   const activeSubs = subscriptions.filter(
-    (sub) => sub.status === "active" && !sub.cancelAtPeriodEnd,
+    (s) => s.status === "active" && !s.cancelAtPeriodEnd,
   );
 
-  const cancellingSubs = subscriptions.filter(
-    (sub) => sub.status === "active" && sub.cancelAtPeriodEnd,
-  );
+  const latestActiveSub = activeSubs[0] || null;
 
   const historySubs = subscriptions.filter(
-    (sub) =>
-      sub.status === "expired" ||
-      (sub.status === "active" && sub.cancelAtPeriodEnd),
+    (s) => s.status === "expired" || s.cancelAtPeriodEnd === true,
+  );
+  const cancellingSubs = subscriptions.filter(
+    (sub) => sub.status === "active" && sub.cancelAtPeriodEnd,
   );
 
   /* =======================
@@ -261,7 +260,7 @@ const Dashboard = () => {
           <h2 className="text-3xl font-bold mb-6">My Subscriptions</h2>
 
           <div className="grid gap-6">
-            {[...activeSubs, ...cancellingSubs].map((sub) => (
+            {activeSubs.map((sub) => (
               <div
                 key={sub._id}
                 className="bg-gray-900 bg-opacity-50 border border-white border-opacity-10 rounded-xl p-6 flex justify-between items-center"
@@ -279,7 +278,7 @@ const Dashboard = () => {
                   </p>
                 </div>
 
-                {!sub.cancelAtPeriodEnd && (
+                {latestActiveSub?._id === sub._id && !sub.cancelAtPeriodEnd && (
                   <button
                     onClick={() => handleCancel(sub)}
                     className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg"
