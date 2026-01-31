@@ -65,6 +65,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/merchant", merchantRoutes);
 app.use("/api/plans", planRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
+// app.use("/api/merchant/dashboard", merchantDashboardRoutes);
 
 app.use(errorHandler);
 
