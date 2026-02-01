@@ -76,6 +76,12 @@ export const startEthereumListeners = () => {
         const stats = await getLiveStats();
         io.emit("stats:update", stats);
 
+        // io.to(merchant._id.toString()).emit("merchant:stats:update", {
+        //   revenue,
+        //   activeSubs,
+        //   mrr,
+        // });
+
         console.log("✅ Subscription created cleanly");
       } catch (err) {
         console.error("❌ Subscribed error:", err.message);

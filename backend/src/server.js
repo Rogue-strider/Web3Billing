@@ -52,6 +52,12 @@ io.on("connection", (socket) => {
     const charts = await getDashboardCharts(range);
     socket.emit("charts:update", charts);
   });
+
+  io.on("connection", (socket) => {
+    socket.on("merchant:join", (merchantId) => {
+      socket.join(merchantId);
+    });
+  });
 });
 
 /* ================= MIDDLEWARE ================= */
