@@ -18,3 +18,10 @@ export const authenticate = (req, res, next) => {
     return res.status(401).json({ message: "Invalid or expired token" });
   }
 };
+
+export const protect = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({ message: "Not authorized" });
+  }
+  next();
+};

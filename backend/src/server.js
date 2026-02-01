@@ -18,6 +18,7 @@ import subscriptionRoutes from "./routes/subscription.route.js";
 import { startSubscriptionExpiryJob } from "./jobs/subscriptionExpiry.job.js";
 import { startEthereumListeners } from "./blockchain/ethereum/listener.js";
 import { getDashboardCharts } from "./services/charts.service.js";
+import merchantDashboardRoutes from "./routes/merchantDashboard.route.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -65,8 +66,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/merchant", merchantRoutes);
 app.use("/api/plans", planRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
-// app.use("/api/merchant/dashboard", merchantDashboardRoutes);
-
+app.use("/api/merchant/dashboard", merchantDashboardRoutes);
 app.use(errorHandler);
 
 /* ================= START ================= */
