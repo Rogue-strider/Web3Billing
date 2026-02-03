@@ -108,10 +108,11 @@ export const startEthereumListeners = () => {
         /* 🔥 UPDATE MERCHANT DASHBOARD */
         const merchantStats = await getMerchantStats(merchant._id);
 
-        io.to(merchant._id.toString()).emit(
+        io.to(merchant.payoutWallet.toLowerCase()).emit(
           "merchant:stats:update",
           merchantStats,
         );
+
 
         console.log("✅ Subscription created cleanly");
       } catch (err) {
@@ -158,10 +159,11 @@ export const startEthereumListeners = () => {
       /* 🔥 UPDATE MERCHANT DASHBOARD */
       const merchantStats = await getMerchantStats(merchant._id);
 
-      io.to(merchant._id.toString()).emit(
+      io.to(merchant.payoutWallet.toLowerCase()).emit(
         "merchant:stats:update",
         merchantStats,
       );
+
 
       console.log("🔴 Subscription cancelled cleanly");
     } catch (err) {
