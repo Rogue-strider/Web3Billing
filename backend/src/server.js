@@ -14,11 +14,11 @@ import authRoutes from "./routes/auth.route.js";
 import merchantRoutes from "./routes/merchant.route.js";
 import planRoutes from "./routes/plan.route.js";
 import subscriptionRoutes from "./routes/subscription.route.js";
+import merchantDashboardRoutes from "./routes/merchantDashboard.route.js";
 
 import { startSubscriptionExpiryJob } from "./jobs/subscriptionExpiry.job.js";
 import { startEthereumListeners } from "./blockchain/ethereum/listener.js";
 import { getDashboardCharts } from "./services/charts.service.js";
-import merchantDashboardRoutes from "./routes/merchantDashboard.route.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -34,29 +34,26 @@ export const io = new Server(server, {
 io.on("connection", (socket) => {
   console.log("🟢 Socket connected:", socket.id);
 
-  socket.on("charts:range", async (range) => {
-    const charts = await getDashboardCharts(range);
-    socket.emit("charts:update", charts);
-  });
-
+  /* USER JOIN ROOM */
   socket.on("join", (userId) => {
     socket.join(userId);
     console.log("👤 User joined room:", userId);
   });
 
-  socket.on("disconnect", () => {
-    console.log("🔴 Socket disconnected:", socket.id);
+  /* MERCHANT JOIN ROOM */
+  socket.on("merchant:join", (merchantId) => {
+    socket.join(merchantId);
+    console.log("🏪 Merchant joined room:", merchantId);
   });
-  
+
+  /* CHART RANGE CHANGE */
   socket.on("charts:range", async (range) => {
     const charts = await getDashboardCharts(range);
     socket.emit("charts:update", charts);
   });
 
-  io.on("connection", (socket) => {
-    socket.on("merchant:join", (merchantId) => {
-      socket.join(merchantId);
-    });
+  socket.on("disconnect", () => {
+    console.log("🔴 Socket disconnected:", socket.id);
   });
 });
 
@@ -73,6 +70,7 @@ app.use("/api/merchant", merchantRoutes);
 app.use("/api/plans", planRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
 app.use("/api/merchant/dashboard", merchantDashboardRoutes);
+
 app.use(errorHandler);
 
 /* ================= START ================= */
