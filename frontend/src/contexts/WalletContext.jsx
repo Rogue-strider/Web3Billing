@@ -114,6 +114,7 @@ import { ethers } from "ethers";
 import toast from "react-hot-toast";
 import { loginWithWallet } from "../services/auth.service";
 import api from "../services/api"; // ✅ ADD THIS
+import { getMyMerchantProfile } from "../services/merchant.service";
 
 export const WalletContext = createContext();
 
@@ -123,6 +124,8 @@ export const WalletProvider = ({ children }) => {
   const [signer, setSigner] = useState(null);
   const [chainId, setChainId] = useState(null);
   const [authReady, setAuthReady] = useState(false);
+  const [merchant, setMerchant] = useState(null);
+  const [isMerchant, setIsMerchant] = useState(false);
 
   /* =======================
       AUTO CONNECT (FIXED)
@@ -188,37 +191,45 @@ export const WalletProvider = ({ children }) => {
   // };
 
   const autoConnect = async () => {
-  if (!window.ethereum) return;
+    if (!window.ethereum) return;
 
-  const token = localStorage.getItem("token");
-  if (!token) return;
+    const token = localStorage.getItem("token");
+    if (!token) return;
 
-  try {
-    // 🔥 TOKEN VALIDATION (MOST IMPORTANT)
-    const res = await api.get("/auth/me");
+    try {
+      // 🔥 TOKEN VALIDATION (MOST IMPORTANT)
+      const res = await api.get("/auth/me");
 
-    if (!res.data?.success) throw new Error("Invalid token");
+      if (!res.data?.success) throw new Error("Invalid token");
 
-    const provider = new ethers.BrowserProvider(window.ethereum);
-    const accounts = await provider.listAccounts();
-    if (!accounts.length) return;
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const accounts = await provider.listAccounts();
+      if (!accounts.length) return;
 
-    const signer = await provider.getSigner();
-    const network = await provider.getNetwork();
+      const signer = await provider.getSigner();
+      const network = await provider.getNetwork();
 
-    setProvider(provider);
-    setSigner(signer);
-    setAccount(accounts[0].address);
-    setChainId(Number(network.chainId));
-    setAuthReady(true);
-  } catch (err) {
-    console.warn("Token invalid or expired → logout");
-    localStorage.clear();
-    setAccount(null);
-    setAuthReady(false);
-  }
-};
+      setProvider(provider);
+      setSigner(signer);
+      setAccount(accounts[0].address);
+      setChainId(Number(network.chainId));
+      setAuthReady(true);
 
+      try {
+        const merchantRes = await getMyMerchantProfile();
+        setIsMerchant(merchantRes.data.isMerchant);
+        setMerchant(merchantRes.data.merchant || null);
+      } catch (err) {
+        setIsMerchant(false);
+        setMerchant(null);
+      }
+    } catch (err) {
+      console.warn("Token invalid or expired → logout");
+      localStorage.clear();
+      setAccount(null);
+      setAuthReady(false);
+    }
+  };
 
   useEffect(() => {
     autoConnect();
@@ -250,6 +261,14 @@ export const WalletProvider = ({ children }) => {
     try {
       await loginWithWallet(provider);
       setAuthReady(true);
+      try {
+        const merchantRes = await getMyMerchantProfile();
+        setIsMerchant(merchantRes.data.isMerchant);
+        setMerchant(merchantRes.data.merchant || null);
+      } catch (err) {
+        setIsMerchant(false);
+        setMerchant(null);
+      }
     } catch (err) {
       console.error("Backend auth failed:", err);
       toast.error("Login failed. Please reconnect wallet.");
@@ -272,6 +291,8 @@ export const WalletProvider = ({ children }) => {
         chainId,
         isConnected: !!account,
         authReady,
+        isMerchant, 
+        merchant,
         connectEthereumWallet,
         disconnect,
       }}

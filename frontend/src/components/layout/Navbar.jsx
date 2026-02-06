@@ -6,12 +6,16 @@ import { Menu, X, Zap } from "lucide-react";
 import WalletButton from "../wallet/WalletButton";
 import { WalletContext } from "../../contexts/WalletContext";
 
+
 const Navbar = () => {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const wallet = useContext(WalletContext);
-  const account = wallet?.account;
+  // const account = wallet?.account;
+  const { account, isMerchant } = useContext(WalletContext);
+
+  
 
   useEffect(() => {
     const handleScroll = () => {

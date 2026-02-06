@@ -7,6 +7,8 @@ import {
 } from "../controllers/merchant.controller.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { updateWebhook } from "../controllers/merchant.controller.js";
+import { protect } from "../middleware/auth.middleware.js";
+import Merchant from "../models/Merchant.model.js";
 
 const router = Router();
 
@@ -52,3 +54,27 @@ router.patch(
   authorize("merchant"),
   asyncHandler(updateWebhook)
 );
+
+/* 🔥 GET CURRENT USER MERCHANT PROFILE */
+router.get("/me", protect, async (req, res) => {
+  try {
+    const merchant = await Merchant.findOne({ user: req.user._id });
+
+    if (!merchant) {
+      return res.json({ isMerchant: false });
+    }
+
+    res.json({
+      isMerchant: true,
+      merchant,
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
+
+
+
+
