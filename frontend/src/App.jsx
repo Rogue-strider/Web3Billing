@@ -4,6 +4,7 @@ import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import Pricing from "./pages/Plans/Pricing";
 import MerchantDashboard from "./pages/merchant/Dashboard";
+import MerchantPlans from "./pages/merchant/Plans";
 
 function NotFoundPage() {
   return (
@@ -38,6 +39,7 @@ function App() {
           <Route path="/pricing" element={<Pricing />} />
           {/* MERCHANT */}
           <Route path="/merchant/dashboard" element={<MerchantDashboard />} />
+          <Route path="/merchant/plans" element={<MerchantPlans />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
