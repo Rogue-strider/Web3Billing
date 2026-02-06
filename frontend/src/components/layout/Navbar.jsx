@@ -1,14 +1,17 @@
 // src/components/layout/Navbar.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Zap } from "lucide-react";
 import WalletButton from "../wallet/WalletButton";
+import { WalletContext } from "../../contexts/WalletContext";
 
 const Navbar = () => {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const wallet = useContext(WalletContext);
+  const account = wallet?.account;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -24,6 +27,13 @@ const Navbar = () => {
     { name: "Pricing", path: "/pricing" },
     { name: "Docs", path: "/docs" },
   ];
+
+  if (account) {
+    navLinks.push(
+      { name: "Merchant", path: "/merchant/dashboard" },
+      { name: "Plans", path: "/merchant/plans" },
+    );
+  }
 
   const isActive = (path) => location.pathname === path;
 
