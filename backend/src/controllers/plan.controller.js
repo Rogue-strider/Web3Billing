@@ -13,7 +13,7 @@ export const createPlan = async (req, res) => {
       currency,
       interval,
       chain,
-      onChainPlanId, // ✅ ADD THIS
+      onChainPlanId, 
     } = req.body;
 
     if (!name || !price || !interval || !onChainPlanId) {
@@ -89,3 +89,4 @@ export const togglePlanStatus = async (req, res) => {
     isActive: plan.isActive,
   });
 };
+
