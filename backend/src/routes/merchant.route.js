@@ -35,14 +35,14 @@ router.post(
 /* =========================
    MERCHANT PROFILE
 ========================= */
-router.get(
-  "/me",
-  authenticate,
-  authorize("merchant"),
-  asyncHandler(getMerchantProfile)
-);
+// router.get(
+//   "/me",
+//   authenticate,
+//   authorize("merchant"),
+//   asyncHandler(getMerchantProfile)
+// );
 
-export default router;
+// export default router;
 
 /* =========================
    Merchant webhook URL update
@@ -56,7 +56,7 @@ router.patch(
 );
 
 /* 🔥 GET CURRENT USER MERCHANT PROFILE */
-router.get("/me", protect, async (req, res) => {
+router.get("/me", authenticate, authorize("merchant"), async (req, res) => {
   try {
     const merchant = await Merchant.findOne({ user: req.user._id });
 
@@ -73,7 +73,7 @@ router.get("/me", protect, async (req, res) => {
   }
 });
 
-
+export default router;
 
 
 

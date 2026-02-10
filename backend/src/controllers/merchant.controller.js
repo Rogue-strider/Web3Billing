@@ -10,13 +10,13 @@ export const onboardMerchant = async (req, res) => {
     return res.status(400).json({ message: "Missing required fields" });
   }
 
-  const existing = await Merchant.findOne({ user: req.user.userId });
+  const existing = await Merchant.findOne({ user: req.user._id });
   if (existing) {
     return res.status(409).json({ message: "Merchant already onboarded" });
   }
 
   const merchant = await Merchant.create({
-    user: req.user.userId,
+    user: req.user._id,
     businessName,
     payoutWallet,
     webhookUrl,
@@ -38,7 +38,7 @@ export const onboardMerchant = async (req, res) => {
    GET MERCHANT PROFILE
 ========================= */
 export const getMerchantProfile = async (req, res) => {
-  const merchant = await Merchant.findOne({ user: req.user.userId }).select("-apiKey");
+  const merchant = await Merchant.findOne({ user: req.user._id }).select("-apiKey");
 
   if (!merchant) {
     return res.status(404).json({ message: "Merchant not found" });
@@ -59,7 +59,7 @@ export const updateWebhook = async (req, res) => {
   }
 
   const merchant = await Merchant.findOneAndUpdate(
-    { user: req.user.userId },
+    { user: req.user._id },
     { webhookUrl },
     { new: true }
   ).select("-apiKey");

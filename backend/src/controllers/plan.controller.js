@@ -1,4 +1,4 @@
-import Plan from "../models/Plan.model.js";
+import Plan from "../models/Plan.model.js"; // 🔥 UNCOMMENT THIS
 import Merchant from "../models/Merchant.model.js";
 
 /* =========================
@@ -13,7 +13,7 @@ export const createPlan = async (req, res) => {
       currency,
       interval,
       chain,
-      onChainPlanId, 
+      onChainPlanId,
     } = req.body;
 
     if (!name || !price || !interval || !onChainPlanId) {
@@ -22,7 +22,7 @@ export const createPlan = async (req, res) => {
       });
     }
 
-    const merchant = await Merchant.findOne({ user: req.user.userId });
+    const merchant = await Merchant.findOne({ user: req.user._id });
 
     if (!merchant) {
       return res.status(403).json({ message: "Merchant not found" });
@@ -36,7 +36,7 @@ export const createPlan = async (req, res) => {
       currency,
       interval,
       chain,
-      onChainPlanId: String(onChainPlanId), // 🔥 IMPORTANT
+      onChainPlanId: String(onChainPlanId),
     });
 
     res.status(201).json({
@@ -53,7 +53,7 @@ export const createPlan = async (req, res) => {
    LIST MERCHANT PLANS
 ========================= */
 export const getMyPlans = async (req, res) => {
-  const merchant = await Merchant.findOne({ user: req.user.userId });
+  const merchant = await Merchant.findOne({ user: req.user._id });
 
   if (!merchant) {
     return res.status(403).json({ message: "Merchant not found" });
@@ -61,7 +61,8 @@ export const getMyPlans = async (req, res) => {
 
   const plans = await Plan.find({ merchant: merchant._id });
 
-  res.json(plans);
+  // ✅ frontend expects res.data.plans
+  res.json({ plans });
 };
 
 /* =========================
@@ -70,7 +71,7 @@ export const getMyPlans = async (req, res) => {
 export const togglePlanStatus = async (req, res) => {
   const { planId } = req.params;
 
-  const merchant = await Merchant.findOne({ user: req.user.userId });
+  const merchant = await Merchant.findOne({ user: req.user._id });
 
   const plan = await Plan.findOne({
     _id: planId,
@@ -89,4 +90,3 @@ export const togglePlanStatus = async (req, res) => {
     isActive: plan.isActive,
   });
 };
-

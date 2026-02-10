@@ -11,7 +11,7 @@ export const requireActiveSubscription = async (req, res, next) => {
   }
 
   const subscription = await Subscription.findOne({
-    user: req.user.userId,
+    user: rreq.user._id,
     merchant: merchantId,
     status: "active",
     currentPeriodEnd: { $gt: new Date() },

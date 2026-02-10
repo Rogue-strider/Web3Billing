@@ -1,7 +1,11 @@
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import { env } from "../config/env.js";
 import { RefreshToken } from "../models/RefreshToken.model.js";
 
+/* ===============================
+   GENERATE ACCESS TOKEN
+=============================== */
 export const generateAccessToken = (user) => {
   return jwt.sign(
     {
@@ -9,11 +13,14 @@ export const generateAccessToken = (user) => {
       wallet: user.walletAddress,
       role: user.role,
     },
-    process.env.JWT_ACCESS_SECRET,
-    { expiresIn: process.env.JWT_ACCESS_EXPIRES }
+    env.JWT_ACCESS_SECRET,
+    { expiresIn: env.JWT_ACCESS_EXPIRES },
   );
 };
 
+/* ===============================
+   GENERATE REFRESH TOKEN
+=============================== */
 export const generateRefreshToken = async (user) => {
   const token = crypto.randomBytes(64).toString("hex");
 
