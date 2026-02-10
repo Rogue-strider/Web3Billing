@@ -87,6 +87,6 @@ export const togglePlanStatus = async (req, res) => {
 
   res.json({
     message: "Plan status updated",
-    isActive: plan.isActive,
+    plan,
   });
 };
