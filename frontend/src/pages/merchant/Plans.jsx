@@ -105,8 +105,6 @@
 
 // export default MerchantPlans;
 
-
-
 import React, { useEffect, useState } from "react";
 import { getMyPlans, togglePlanStatus } from "../../services/plan.service";
 import toast from "react-hot-toast";
@@ -139,9 +137,8 @@ const MerchantPlans = () => {
   const handleToggle = async (planId) => {
     try {
       const res = await togglePlanStatus(planId);
-
       setPlans((prev) =>
-        prev.map((p) => (p._id === planId ? res.data.plan : p))
+        prev.map((p) => (p._id === planId ? res.data.plan : p)),
       );
 
       toast.success("Plan status updated");
@@ -165,13 +162,9 @@ const MerchantPlans = () => {
               key={plan._id}
               className="bg-gray-900 bg-opacity-50 backdrop-blur-lg border border-white border-opacity-10 rounded-xl p-6"
             >
-              <h2 className="text-xl font-semibold mb-2">
-                {plan.name}
-              </h2>
+              <h2 className="text-xl font-semibold mb-2">{plan.name}</h2>
 
-              <p className="text-gray-400 mb-2">
-                {plan.description}
-              </p>
+              <p className="text-gray-400 mb-2">{plan.description}</p>
 
               <p className="text-lg font-bold mb-2">
                 ${plan.price} / {plan.interval}
