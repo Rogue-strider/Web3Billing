@@ -27,7 +27,7 @@ export const createSubscription = async (req, res) => {
   await Subscription.updateMany(
     {
       user: req.user._id,
-      plan: plan._id,
+      plan: merchant._id,
       status: "active",
     },
     {
