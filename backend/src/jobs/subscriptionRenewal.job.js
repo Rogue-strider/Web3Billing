@@ -1,14 +1,11 @@
 import cron from "node-cron";
 import Subscription from "../models/Subscription.model.js";
-import Plan from "../models/Plan.model.js";
 
 export const startSubscriptionRenewalJob = () => {
-  // ⏰ run every minute (prod me 5–10 min bhi theek)
   cron.schedule("* * * * *", async () => {
     try {
       const now = new Date();
 
-      // 1️⃣ find subs eligible for renewal
       const subs = await Subscription.find({
         status: "active",
         cancelAtPeriodEnd: false,
@@ -16,12 +13,13 @@ export const startSubscriptionRenewalJob = () => {
       }).populate("plan");
 
       for (const sub of subs) {
-        // 2️⃣ MOCK PAYMENT (always success for now)
-        const paymentSuccess = true;
+        if (!sub.plan) continue;
+        if (sub.currentPeriodEnd > now) continue;
 
+        // 🔁 mock payment
+        const paymentSuccess = true;
         if (!paymentSuccess) continue;
 
-        // 3️⃣ extend period
         const newEnd = new Date(sub.currentPeriodEnd);
 
         if (sub.plan.interval === "monthly") {

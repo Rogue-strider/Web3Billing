@@ -42,6 +42,11 @@ const subscriptionSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    
+    gracePeriodEnd: {
+      type: Date,
+      default: null,
+    },
 
     chain: {
       type: String,
@@ -56,7 +61,7 @@ const subscriptionSchema = new mongoose.Schema(
       // index: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default mongoose.model("Subscription", subscriptionSchema);
