@@ -27,13 +27,12 @@ export const createSubscription = async (req, res) => {
   await Subscription.updateMany(
     {
       user: req.user._id,
-      plan: merchant._id,
       status: "active",
     },
     {
       $set: {
-        status: "expired", // 🔥 IMPORTANT
-        cancelAtPeriodEnd: false, // reset
+        status: "renewed", // 🔥 NOT expired
+        cancelAtPeriodEnd: false,
       },
     },
   );
