@@ -17,6 +17,7 @@ import subscriptionRoutes from "./routes/subscription.route.js";
 import merchantDashboardRoutes from "./routes/merchantDashboard.route.js";
 
 import { startSubscriptionExpiryJob } from "./jobs/subscriptionExpiry.job.js";
+import { startSubscriptionRenewalJob } from "./jobs/subscriptionRenewal.job.js";
 import { startEthereumListeners } from "./blockchain/ethereum/listener.js";
 import { getDashboardCharts } from "./services/charts.service.js";
 import merchantPlansRoutes from "./routes/merchantPlans.route.js";
@@ -79,6 +80,7 @@ app.use(errorHandler);
 const startServer = async () => {
   await connectDB();
   startSubscriptionExpiryJob();
+  startSubscriptionRenewalJob();
   startEthereumListeners();
 
   server.listen(env.PORT, () => {
