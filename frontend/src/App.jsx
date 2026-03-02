@@ -5,6 +5,7 @@ import Dashboard from "./pages/Dashboard";
 import Pricing from "./pages/Plans/Pricing";
 import MerchantDashboard from "./pages/merchant/Dashboard";
 import MerchantPlans from "./pages/merchant/Plans";
+import CreatePlan from "./pages/merchant/createPlan";
 
 function NotFoundPage() {
   return (
@@ -40,6 +41,7 @@ function App() {
           {/* MERCHANT */}
           <Route path="/merchant/dashboard" element={<MerchantDashboard />} />
           <Route path="/merchant/plans" element={<MerchantPlans />} />
+          <Route path="/merchant/plans/create" element={<CreatePlan />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>

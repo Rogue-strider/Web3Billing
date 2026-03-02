@@ -7,37 +7,31 @@ import Subscription from "../models/Subscription.model.js";
 ========================= */
 export const createPlan = async (req, res) => {
   try {
-    const {
-      name,
-      description,
-      price,
-      currency,
-      interval,
-      chain,
-      onChainPlanId,
-    } = req.body;
+    const { name, description, price, interval, chain, currency } = req.body;
 
-    if (!name || !price || !interval || !onChainPlanId) {
+    if (!name || !price || !interval || !chain || !currency) {
       return res.status(400).json({
-        message: "Missing required fields (including onChainPlanId)",
+        message: "Missing required fields",
       });
     }
 
     const merchant = await Merchant.findOne({ user: req.user._id });
-
     if (!merchant) {
       return res.status(403).json({ message: "Merchant not found" });
     }
+
+    const onChainPlanId = `OFFCHAIN_${Date.now()}`;
 
     const plan = await Plan.create({
       merchant: merchant._id,
       name,
       description,
       price,
-      currency,
       interval,
       chain,
-      onChainPlanId: String(onChainPlanId),
+      currency,
+      onChainPlanId, 
+      isActive: true,
     });
 
     res.status(201).json({
@@ -54,33 +48,35 @@ export const createPlan = async (req, res) => {
    LIST MERCHANT PLANS
 ========================= */
 export const getMyPlans = async (req, res) => {
-  const page = Number(req.query.page) || 1;
-  const limit = Number(req.query.limit) || 6;
-  const skip = (page - 1) * limit;
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = 6; // per page
+    const skip = (page - 1) * limit;
+    const merchant = await Merchant.findOne({ user: req.user._id });
+    if (!merchant) {
+      return res.status(403).json({ message: "Merchant not found" });
+    }
 
-  const merchant = await Merchant.findOne({ user: req.user._id });
-  if (!merchant) {
-    return res.status(403).json({ message: "Merchant not found" });
-  }
+    const totalPlans = await Plan.countDocuments({
+      merchant: merchant._id,
+    });
 
-  const [plans, total] = await Promise.all([
-    Plan.find({ merchant: merchant._id })
+    const plans = await Plan.find({ merchant: merchant._id })
+      .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limit)
-      .sort({ createdAt: -1 }),
+      .limit(limit);
 
-    Plan.countDocuments({ merchant: merchant._id }),
-  ]);
-
-  res.json({
-    plans,
-    pagination: {
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-      totalItems: total,
-    },
-  });
+    res.json({
+      plans,
+      pagination: {
+        totalPlans,
+        totalPages: Math.ceil(totalPlans / limit),
+        currentPage: page,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
 /* =========================

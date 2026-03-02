@@ -3,8 +3,8 @@ import api from "./api";
 /* ===============================
    GET MY MERCHANT PLANS
 =============================== */
-export const getMyPlans = (page = 1, limit = 6) => {
-  return api.get(`/plans?page=${page}&limit=${limit}`);
+export const getMyPlans = (page = 1) => {
+  return api.get(`/plans?page=${page}`);
 };
 
 /* ===============================
@@ -20,3 +20,5 @@ export const togglePlanStatus = (planId) => {
 export const deletePlan = (planId) => {
   return api.delete(`/plans/${planId}`);
 };
+
+export const createPlan = (data) => api.post("/plans", data);
