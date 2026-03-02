@@ -3,8 +3,8 @@ import api from "./api";
 /* ===============================
    GET MY MERCHANT PLANS
 =============================== */
-export const getMyPlans = () => {
-  return api.get("/plans");
+export const getMyPlans = (page = 1, limit = 6) => {
+  return api.get(`/plans?page=${page}&limit=${limit}`);
 };
 
 /* ===============================

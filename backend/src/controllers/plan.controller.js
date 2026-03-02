@@ -54,16 +54,33 @@ export const createPlan = async (req, res) => {
    LIST MERCHANT PLANS
 ========================= */
 export const getMyPlans = async (req, res) => {
-  const merchant = await Merchant.findOne({ user: req.user._id });
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 6;
+  const skip = (page - 1) * limit;
 
+  const merchant = await Merchant.findOne({ user: req.user._id });
   if (!merchant) {
     return res.status(403).json({ message: "Merchant not found" });
   }
 
-  const plans = await Plan.find({ merchant: merchant._id });
+  const [plans, total] = await Promise.all([
+    Plan.find({ merchant: merchant._id })
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 }),
 
-  // ✅ frontend expects res.data.plans
-  res.json({ plans });
+    Plan.countDocuments({ merchant: merchant._id }),
+  ]);
+
+  res.json({
+    plans,
+    pagination: {
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+      totalItems: total,
+    },
+  });
 };
 
 /* =========================
