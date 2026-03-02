@@ -1,277 +1,210 @@
-🚀 Web3Billing — Crypto Subscription Platform
+# 🚀 Web3Billing — Crypto Subscription Platform
 
-Web3Billing is a full-stack SaaS platform that enables automated recurring crypto payments for Web3 products — similar to Stripe, but for crypto subscriptions.
+> **"The Stripe for Web3 Subscriptions"**
 
-It allows merchants to create subscription plans, users to subscribe using wallets, and handles renewals, cancellations, analytics, and webhooks across multiple blockchains.
+Web3Billing is a full-stack SaaS platform that enables **automated recurring crypto payments** for Web3 products. It allows merchants to create subscription plans, users to subscribe using wallets, and handles renewals, cancellations, analytics, and webhooks across multiple blockchains.
 
-🌐 Live Concept
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
+[![React](https://img.shields.io/badge/React-18-blue.svg)](https://reactjs.org/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-brightgreen.svg)](https://www.mongodb.com/)
+[![Solidity](https://img.shields.io/badge/Solidity-0.8.x-purple.svg)](https://soliditylang.org/)
 
-“The Stripe for Web3 Subscriptions”
+---
 
-🧠 Why Web3Billing?
+## 🧠 Why Web3Billing?
 
-Traditional crypto payments are:
+Traditional crypto payments are **one-time**, **manual**, and **hard to manage** for recurring billing.
 
-One-time
+| Problem | Solution |
+|---|---|
+| No recurring crypto payments | ✅ Automated renewals |
+| No lifecycle management | ✅ Subscription lifecycle (active → renewed → expired) |
+| No merchant tools | ✅ Full merchant dashboard |
+| Single-chain only | ✅ Multi-chain support |
+| No integrations | ✅ Webhook-based integrations |
 
-Manual
+---
 
-Hard to manage recurring billing
-
-Web3Billing solves this by providing:
-
-Automated renewals
-
-Subscription lifecycle management
-
-Merchant dashboards
-
-Webhook-based integrations
-
-Multi-chain support
-
-🏗️ Architecture Overview
+## 🏗️ Architecture Overview
+```
 Frontend (React)
-   ↓
+      ↓
 Backend (Node.js / Express)
-   ↓
+      ↓
 MongoDB (Plans, Subscriptions, Merchants, Users)
-   ↓
+      ↓
 Blockchain (Ethereum / Polygon / Solana)
-   ↓
+      ↓
 Cron Jobs (Renewals & Expiry)
-🛠️ Tech Stack
-Frontend
+```
 
-React.js
+---
 
-Tailwind CSS
+## 🛠️ Tech Stack
 
-React Hooks & Context
+### Frontend
+- **React.js** — UI framework
+- **Tailwind CSS** — Styling
+- **React Hooks & Context** — State management
+- **MetaMask / Phantom** — Wallet integrations
 
-Wallet integrations (MetaMask, Phantom)
+### Backend
+- **Node.js + Express.js** — REST API server
+- **MongoDB + Mongoose** — Database & ODM
+- **JWT** — Access & refresh token auth
+- **RBAC** — Role-based access control (merchant / user)
 
-Charting (analytics dashboard)
+### Blockchain
+- **Solidity** — Smart contracts (Ethereum / Polygon)
+- **Rust + Anchor** — Solana programs
+- **Web3.js / Ethers.js** — Blockchain interaction
 
-Backend
+### Infrastructure
+- **node-cron** — Background job scheduling
+- **Webhooks** — Event-driven merchant integrations
 
-Node.js
+---
 
-Express.js
+## ✨ Core Features
 
-MongoDB + Mongoose
+### 🔐 Authentication
+- Wallet-based login
+- JWT access & refresh tokens
+- Role-based authorization
 
-JWT Authentication
+### 🏪 Merchant Features
+- Create / activate / deactivate subscription plans
+- Delete plans safely *(blocked if active subscriptions exist)*
+- Full merchant dashboard
 
-Role-based access control (merchant / user)
+### 🔄 Subscription System
+- Subscribe to plans via wallet
+- Cancel at period end
+- Auto-renew subscriptions
+- Full subscription history
 
-Blockchain
+**Status Lifecycle:**
+```
+active → renewed → expired
+```
 
-Solidity (Ethereum / Polygon)
+### ⏱️ Cron Jobs
 
-Rust + Anchor (Solana)
+| Job | Purpose |
+|---|---|
+| Subscription Renewal | Auto-extend active subscriptions |
+| Subscription Expiry | Expire canceled subscriptions at period end |
 
-Web3.js / Ethers.js
+### 📊 Analytics Dashboard
+- Active subscribers, MRR, history & charts over time
 
-Infrastructure
+### 🔔 Webhooks
+Events: `subscription_created` · `subscription_renewed` · `subscription_expired`
 
-Node-cron (background jobs)
+---
 
-Webhooks
+## 📂 Project Structure
+```
+web3billing/
+├── backend/
+│   ├── controllers/
+│   ├── routes/
+│   ├── models/
+│   ├── middleware/
+│   ├── jobs/             # cron jobs
+│   ├── services/
+│   └── utils/
+│
+└── frontend/
+    ├── pages/
+    ├── components/
+    ├── services/
+    ├── hooks/
+    └── styles/
+```
 
-REST APIs
+---
 
-✨ Core Features
-🔹 Authentication
-
-Wallet-based login
-
-JWT access & refresh tokens
-
-Role-based authorization
-
-🔹 Merchant Features
-
-Create subscription plans
-
-Activate / deactivate plans
-
-Delete plans safely (blocked if active subscriptions exist)
-
-View all plans in dashboard
-
-🔹 Subscription System
-
-Subscribe to plans
-
-Cancel at period end
-
-Auto-renew subscriptions
-
-Full subscription history
-
-Status lifecycle:
-
-active
-
-renewed
-
-expired
-
-🔹 Cron Jobs (Background Automation)
-Job	Purpose
-Subscription Renewal	Auto-extend active subscriptions
-Subscription Expiry	Expire canceled subscriptions at period end
-
-Runs automatically using node-cron.
-
-🔹 Analytics Dashboard
-
-Active subscribers
-
-MRR (Monthly Recurring Revenue)
-
-Subscription history
-
-Charts over time
-
-🔹 Webhooks
-
-Merchant webhook support
-
-Events like:
-
-subscription_created
-
-subscription_renewed
-
-subscription_expired
-
-📂 Project Structure
-backend/
- ├─ controllers/
- ├─ routes/
- ├─ models/
- ├─ middleware/
- ├─ jobs/          # cron jobs
- ├─ services/
- └─ utils/
-
-frontend/
- ├─ pages/
- ├─ components/
- ├─ services/
- ├─ hooks/
- └─ styles/
-⚙️ Environment Variables
-Backend .env
+## ⚙️ Environment Variables
+```env
 PORT=5000
 MONGO_URI=your_mongodb_uri
 JWT_ACCESS_SECRET=your_secret
 JWT_REFRESH_SECRET=your_secret
 JWT_ACCESS_EXPIRES=15m
 JWT_REFRESH_EXPIRES=7d
-▶️ Running Locally
-Backend
-cd backend
-npm install
-npm run dev
-Frontend
-cd frontend
-npm install
-npm run dev
-🧪 Testing Status
+```
 
-Smart contracts: 95%+ test coverage
+---
 
-Backend APIs: manually tested
+## ▶️ Running Locally
+```bash
+# Backend
+cd backend && npm install && npm run dev
 
-Cron jobs tested locally
+# Frontend
+cd frontend && npm install && npm run dev
+```
 
-🚧 What’s Remaining (Roadmap)
-🔹 Phase 1 – SaaS Polish
+---
 
-Pagination
+## 🧪 Testing Status
 
-Better error handling
+| Component | Status |
+|---|---|
+| Smart Contracts | ✅ 95%+ test coverage |
+| Backend APIs | ✅ Manually tested |
+| Cron Jobs | ✅ Tested locally |
 
-Webhook testing UI
+---
 
-🔹 Phase 2 – Security & Scaling
+## 🚧 Roadmap
 
-Rate limiting
+### Phase 1 — SaaS Polish
+- [ ] Pagination & better error handling
+- [ ] Webhook testing UI
 
-Input validation (Zod/Joi)
+### Phase 2 — Security & Scaling
+- [ ] Rate limiting · Input validation (Zod/Joi)
+- [ ] Redis caching · Webhook signature verification
 
-Redis caching
+### Phase 3 — Business Features
+- [ ] Trial periods · Multi-currency pricing
+- [ ] Stripe + Crypto hybrid billing · Admin dashboard
 
-Webhook signature verification
+### Phase 4 — Investor Ready
+- [ ] Landing page · Demo video
+- [ ] CI/CD · Production deployment (Domain + SSL)
 
-🔹 Phase 3 – Business Features
+---
 
-Trial periods
+## 💰 Business Potential
 
-Multi-currency pricing
+| Use Case | Description |
+|---|---|
+| Stripe for Web3 | Default crypto billing layer |
+| DAO Subscriptions | Recurring payments for DAOs |
+| SaaS Infrastructure | Plug-in billing for Web3 products |
+| White-label B2B | Customizable enterprise product |
 
-Stripe + Crypto hybrid billing
+**Revenue models:** % per transaction · SaaS monthly fee · Enterprise licensing
 
-Admin dashboard
+---
 
-🔹 Phase 4 – Investor Ready
+## 🎯 Vision
 
-Landing page
+> Build the **default subscription infrastructure for Web3**.
 
-Demo video
+---
 
-Metrics simulation
+## 👨‍💻 Author
 
-Production deployment
+**Satyam** — Full-Stack Web3 Developer · 📍 India  
+[![GitHub](https://img.shields.io/badge/GitHub-Profile-black?logo=github)](https://github.com/your-profile-here)
 
-CI/CD
+---
 
-Domain + SSL
+⭐ If you find this useful, **star the repo** — it helps a lot!
 
-💰 Business Potential
-
-Web3Billing can be:
-
-Stripe for Web3
-
-Subscription layer for DAOs
-
-Crypto SaaS billing infrastructure
-
-White-label enterprise product
-
-Revenue models:
-
-% per transaction
-
-SaaS monthly fee
-
-Enterprise licensing
-
-🎯 Vision
-
-Build the default subscription infrastructure for Web3.
-
-👨‍💻 Author
-
-Satyam
-Full-Stack Web3 Developer
-📍 India
-🔗 GitHub: add your profile link here
-
-⭐ Final Note
-
-This project demonstrates:
-
-Real SaaS architecture
-
-Blockchain + Web2 integration
-
-Production-ready backend patterns
-
-Strong system design
-
-If you like the project, ⭐ star the repo!
+> This project demonstrates real SaaS architecture, Blockchain + Web2 integration, production-ready backend patterns, and strong system design.
