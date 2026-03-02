@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { getMyPlans, togglePlanStatus } from "../../services/plan.service";
+import {
+  getMyPlans,
+  togglePlanStatus,
+  deletePlan,
+} from "../../services/plan.service";
 import toast from "react-hot-toast";
 
 const MerchantPlans = () => {
@@ -38,6 +42,20 @@ const MerchantPlans = () => {
       toast.error("Failed to update plan");
     }
   };
+  /* =========================
+   DELETE PLAN
+========================= */
+  const handleDelete = async (planId) => {
+    if (!window.confirm("Delete this plan permanently?")) return;
+
+    try {
+      await deletePlan(planId);
+      await loadPlans(); // refresh list
+      toast.success("Plan deleted");
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to delete plan");
+    }
+  };
 
   return (
     <div className="min-h-screen px-6 pt-24 text-white">
@@ -63,22 +81,31 @@ const MerchantPlans = () => {
               </p>
 
               <div className="flex items-center justify-between mt-4">
-                <span
-                  className={`px-3 py-1 text-sm rounded-full ${
-                    plan.isActive
-                      ? "bg-green-600 bg-opacity-20 text-green-400"
-                      : "bg-red-600 bg-opacity-20 text-red-400"
-                  }`}
-                >
-                  {plan.isActive ? "Active" : "Inactive"}
-                </span>
+                <div className="flex items-center gap-2 mt-4">
+                  <span
+                    className={`px-3 py-1 text-sm rounded-full ${
+                      plan.isActive
+                        ? "bg-green-600 bg-opacity-20 text-green-400"
+                        : "bg-red-600 bg-opacity-20 text-red-400"
+                    }`}
+                  >
+                    {plan.isActive ? "Active" : "Inactive"}
+                  </span>
 
-                <button
-                  onClick={() => handleToggle(plan._id)}
-                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-sm"
-                >
-                  Toggle
-                </button>
+                  <button
+                    onClick={() => handleToggle(plan._id)}
+                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-sm"
+                  >
+                    Toggle
+                  </button>
+
+                  <button
+                    onClick={() => handleDelete(plan._id)}
+                    className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             </div>
           ))}

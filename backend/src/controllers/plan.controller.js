@@ -1,5 +1,6 @@
 import Plan from "../models/Plan.model.js"; // 🔥 UNCOMMENT THIS
 import Merchant from "../models/Merchant.model.js";
+import Subscription from "../models/Subscription.model.js";
 
 /* =========================
    CREATE PLAN
