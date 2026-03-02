@@ -90,3 +90,40 @@ export const togglePlanStatus = async (req, res) => {
     plan,
   });
 };
+
+/* =========================
+   DELETE PLAN
+========================= */
+export const deletePlan = async (req, res) => {
+  const { planId } = req.params;
+
+  const merchant = await Merchant.findOne({ user: req.user._id });
+  if (!merchant) {
+    return res.status(403).json({ message: "Merchant not found" });
+  }
+
+  const plan = await Plan.findOne({
+    _id: planId,
+    merchant: merchant._id,
+  });
+
+  if (!plan) {
+    return res.status(404).json({ message: "Plan not found" });
+  }
+
+  // ❌ Check active subscriptions
+  const activeSubs = await Subscription.countDocuments({
+    plan: plan._id,
+    status: "active",
+  });
+
+  if (activeSubs > 0) {
+    return res.status(400).json({
+      message: "Cannot delete plan with active subscriptions",
+    });
+  }
+
+  await plan.deleteOne();
+
+  res.json({ message: "Plan deleted successfully" });
+};
