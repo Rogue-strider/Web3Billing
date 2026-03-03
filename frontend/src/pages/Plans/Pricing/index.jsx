@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { useWallet } from "../../../hooks/useWallet";
 import useContract from "../../../hooks/useContract";
 import { contracts } from "../../../config/contracts";
+import { createSubscription } from "../../../services/subscription.service";
 
 const Pricing = () => {
   const { isConnected } = useWallet();
@@ -14,12 +15,13 @@ const Pricing = () => {
   // 🔗 Smart Contract (Ethereum)
   const subscriptionContract = useContract(
     contracts.ethereum.subscriptionManager.address,
-    contracts.ethereum.subscriptionManager.abi
+    contracts.ethereum.subscriptionManager.abi,
   );
 
   // 🔥 BACKEND-CONNECTED PLANS (onChain ready)
   const plans = [
     {
+      _id: "69a5cb1cbd889d433e2564ab",
       name: "Starter",
       priceEth: "0.01",
       displayPrice: "$49",
@@ -39,6 +41,7 @@ const Pricing = () => {
       highlighted: false,
     },
     {
+      _id: "694fd2e02b11e53e564e0c99",
       name: "Growth",
       priceEth: "0.02",
       displayPrice: "$99",
@@ -81,11 +84,17 @@ const Pricing = () => {
         plan.duration,
         {
           value: ethers.parseEther(plan.priceEth),
-        }
+        },
       );
 
       await tx.wait();
       toast.dismiss();
+
+      // 🔥 IMPORTANT PART — BACKEND CALL
+      await createSubscription({
+        planId: plan._id,
+      });
+
       toast.success("Subscription successful 🎉");
     } catch (err) {
       console.error(err);

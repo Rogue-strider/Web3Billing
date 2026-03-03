@@ -42,6 +42,7 @@ function App() {
           <Route path="/merchant/dashboard" element={<MerchantDashboard />} />
           <Route path="/merchant/plans" element={<MerchantPlans />} />
           <Route path="/merchant/plans/create" element={<CreatePlan />} />
+          <Route path="/pricing" element={<Pricing />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>

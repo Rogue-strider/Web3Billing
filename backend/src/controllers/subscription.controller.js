@@ -31,7 +31,8 @@ export const createSubscription = async (req, res) => {
     },
     {
       $set: {
-        status: "renewed", // 🔥 NOT expired
+        status: "expired",
+        currentPeriodEnd: new Date(),
         cancelAtPeriodEnd: false,
       },
     },
@@ -73,8 +74,14 @@ export const createSubscription = async (req, res) => {
 ===================================================== */
 export const getMySubscriptions = async (req, res) => {
   try {
-    const subs = await Subscription.find({ user: req.user._id })
-      .sort({ createdAt: -1 }) // latest first
+    const now = new Date();
+
+    const subs = await Subscription.find({
+      user: req.user._id,
+      currentPeriodEnd: { $gt: now }, 
+      status: "active",
+    })
+      .sort({ createdAt: -1 })
       .populate("plan", "name price interval")
       .populate("merchant", "businessName");
 
