@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 import { ethers } from "ethers";
@@ -8,6 +8,7 @@ import { useWallet } from "../../../hooks/useWallet";
 import useContract from "../../../hooks/useContract";
 import { contracts } from "../../../config/contracts";
 import { createSubscription } from "../../../services/subscription.service";
+import api from "../../../services/api";
 
 const Pricing = () => {
   const { isConnected } = useWallet();
@@ -19,49 +20,49 @@ const Pricing = () => {
   );
 
   // 🔥 BACKEND-CONNECTED PLANS (onChain ready)
-  const plans = [
-    {
-      _id: "69a5cb1cbd889d433e2564ab",
-      name: "Starter",
-      priceEth: "0.01",
-      displayPrice: "$49",
-      period: "/month",
-      description: "Perfect for getting started",
-      duration: 30 * 24 * 60 * 60, // 30 days
-      onChainPlanId: 1,
-      merchantWallet: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-      features: [
-        "Up to 100 subscribers",
-        "2% transaction fee",
-        "Basic analytics",
-        "Email support",
-        "API access",
-        "Multi-token support",
-      ],
-      highlighted: false,
-    },
-    {
-      _id: "694fd2e02b11e53e564e0c99",
-      name: "Growth",
-      priceEth: "0.02",
-      displayPrice: "$99",
-      period: "/month",
-      description: "Best for growing businesses",
-      duration: 30 * 24 * 60 * 60,
-      onChainPlanId: 2,
-      merchantWallet: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-      features: [
-        "Up to 1,000 subscribers",
-        "1.5% transaction fee",
-        "Advanced analytics",
-        "Priority support",
-        "Webhook integration",
-        "Custom branding",
-        "Multi-chain support",
-      ],
-      highlighted: true,
-    },
-  ];
+  const [plans, setPlans] = useState([]);
+
+  /* =========================
+     LOAD PLANS FROM BACKEND
+  ========================= */
+  useEffect(() => {
+    const loadPlans = async () => {
+      try {
+        const res = await api.get("/public/plans");
+
+        const mapped = (res.data.plans || []).map((p) => ({
+          ...p,
+
+          // frontend UI compatibility
+          displayPrice: `$${p.price}`,
+          period: `/${p.interval}`,
+
+          // temporary ETH mapping
+          priceEth: "0.01",
+
+          // fallback
+          duration: 30 * 24 * 60 * 60,
+          merchantWallet: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+
+          highlighted: false,
+
+          features: [
+            "Advanced analytics",
+            "Webhook integration",
+            "Multi-chain support",
+            "API access",
+          ],
+        }));
+
+        setPlans(mapped);
+      } catch (err) {
+        console.error("Failed to load plans", err);
+        toast.error("Failed to load plans");
+      }
+    };
+
+    loadPlans();
+  }, []);
 
   // 🚀 SUBSCRIBE HANDLER
   const handleSubscribe = async (plan) => {
@@ -80,7 +81,7 @@ const Pricing = () => {
 
       const tx = await subscriptionContract.subscribe(
         plan.merchantWallet,
-        plan.onChainPlanId,
+        Number(plan.onChainPlanId) || 1,
         plan.duration,
         {
           value: ethers.parseEther(plan.priceEth),

@@ -20,7 +20,7 @@ export const createPlan = async (req, res) => {
       return res.status(403).json({ message: "Merchant not found" });
     }
 
-    const onChainPlanId = `OFFCHAIN_${Date.now()}`;
+    const onChainPlanId = Date.now();
 
     const plan = await Plan.create({
       merchant: merchant._id,
