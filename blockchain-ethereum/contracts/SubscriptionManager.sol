@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-contract SubscriptionManager {
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+
+contract SubscriptionManager is ReentrancyGuard {
+
     struct Subscription {
         address user;
         address merchant;
@@ -12,6 +15,7 @@ contract SubscriptionManager {
     }
 
     uint256 public subscriptionCounter;
+
     mapping(uint256 => Subscription) public subscriptions;
 
     event Subscribed(
@@ -32,21 +36,27 @@ contract SubscriptionManager {
         address merchant,
         uint256 planId,
         uint256 duration
-    ) external payable {
+    ) external payable nonReentrant {
+
         require(msg.value > 0, "Payment required");
         require(merchant != address(0), "Invalid merchant");
+        require(duration > 0, "Invalid duration");
 
         subscriptionCounter++;
+
+        uint256 start = block.timestamp;
+        uint256 end = block.timestamp + duration;
 
         subscriptions[subscriptionCounter] = Subscription({
             user: msg.sender,
             merchant: merchant,
             planId: planId,
-            startTime: block.timestamp,
-            endTime: block.timestamp + duration,
+            startTime: start,
+            endTime: end,
             active: true
         });
 
+        // Transfer ETH to merchant
         (bool success, ) = merchant.call{value: msg.value}("");
         require(success, "Payment failed");
 
@@ -55,12 +65,13 @@ contract SubscriptionManager {
             msg.sender,
             merchant,
             planId,
-            block.timestamp,
-            block.timestamp + duration
+            start,
+            end
         );
     }
 
     function cancel(uint256 subscriptionId) external {
+
         Subscription storage sub = subscriptions[subscriptionId];
 
         require(sub.user == msg.sender, "Not subscription owner");
@@ -72,7 +83,9 @@ contract SubscriptionManager {
     }
 
     function isActive(uint256 subscriptionId) external view returns (bool) {
+
         Subscription memory sub = subscriptions[subscriptionId];
+
         return sub.active && block.timestamp <= sub.endTime;
     }
 }
