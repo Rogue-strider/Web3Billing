@@ -9,11 +9,13 @@ export const startSubscriptionExpiryJob = () => {
       const result = await Subscription.updateMany(
         {
           status: "active",
-          cancelAtPeriodEnd: true,
           currentPeriodEnd: { $lte: now },
         },
         {
-          $set: { status: "expired" },
+          $set: {
+            status: "expired",
+            cancelAtPeriodEnd: false,
+          },
         },
       );
 

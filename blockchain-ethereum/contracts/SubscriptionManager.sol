@@ -5,6 +5,10 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 contract SubscriptionManager is ReentrancyGuard {
 
+    /* =============================
+        STRUCTS
+    ============================== */
+
     struct Subscription {
         address user;
         address merchant;
@@ -14,9 +18,83 @@ contract SubscriptionManager is ReentrancyGuard {
         bool active;
     }
 
+    struct Plan {
+        uint256 price;
+        uint256 duration;
+        bool active;
+    }
+
+    /* =============================
+        STATE
+    ============================== */
+
+    address public owner;
+
     uint256 public subscriptionCounter;
 
     mapping(uint256 => Subscription) public subscriptions;
+
+    mapping(uint256 => Plan) public plans;
+
+    mapping(address => bool) public merchants;
+
+    /* =============================
+        MODIFIERS
+    ============================== */
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only owner");
+        _;
+    }
+
+    /* =============================
+        CONSTRUCTOR
+    ============================== */
+
+    constructor() {
+        owner = msg.sender;
+    }
+
+    /* =============================
+        MERCHANT MANAGEMENT
+    ============================== */
+
+    function registerMerchant(address merchant) external onlyOwner {
+        require(merchant != address(0), "Invalid merchant");
+        merchants[merchant] = true;
+    }
+
+    function removeMerchant(address merchant) external onlyOwner {
+        merchants[merchant] = false;
+    }
+
+    /* =============================
+        PLAN MANAGEMENT
+    ============================== */
+
+    function createPlan(
+        uint256 planId,
+        uint256 price,
+        uint256 duration
+    ) external onlyOwner {
+
+        require(price > 0, "Invalid price");
+        require(duration > 0, "Invalid duration");
+
+        plans[planId] = Plan({
+            price: price,
+            duration: duration,
+            active: true
+        });
+    }
+
+    function deactivatePlan(uint256 planId) external onlyOwner {
+        plans[planId].active = false;
+    }
+
+    /* =============================
+        EVENTS
+    ============================== */
 
     event Subscribed(
         uint256 indexed subscriptionId,
@@ -32,20 +110,27 @@ contract SubscriptionManager is ReentrancyGuard {
         address indexed user
     );
 
+    /* =============================
+        SUBSCRIBE
+    ============================== */
+
     function subscribe(
         address merchant,
-        uint256 planId,
-        uint256 duration
+        uint256 planId
     ) external payable nonReentrant {
 
-        require(msg.value > 0, "Payment required");
-        require(merchant != address(0), "Invalid merchant");
-        require(duration > 0, "Invalid duration");
+        require(merchants[merchant], "Merchant not registered");
+
+        Plan memory plan = plans[planId];
+
+        require(plan.active, "Plan not active");
+
+        require(msg.value == plan.price, "Incorrect payment");
 
         subscriptionCounter++;
 
         uint256 start = block.timestamp;
-        uint256 end = block.timestamp + duration;
+        uint256 end = block.timestamp + plan.duration;
 
         subscriptions[subscriptionCounter] = Subscription({
             user: msg.sender,
@@ -56,7 +141,6 @@ contract SubscriptionManager is ReentrancyGuard {
             active: true
         });
 
-        // Transfer ETH to merchant
         (bool success, ) = merchant.call{value: msg.value}("");
         require(success, "Payment failed");
 
@@ -70,6 +154,10 @@ contract SubscriptionManager is ReentrancyGuard {
         );
     }
 
+    /* =============================
+        CANCEL
+    ============================== */
+
     function cancel(uint256 subscriptionId) external {
 
         Subscription storage sub = subscriptions[subscriptionId];
@@ -81,6 +169,10 @@ contract SubscriptionManager is ReentrancyGuard {
 
         emit SubscriptionCancelled(subscriptionId, msg.sender);
     }
+
+    /* =============================
+        ACTIVE CHECK
+    ============================== */
 
     function isActive(uint256 subscriptionId) external view returns (bool) {
 

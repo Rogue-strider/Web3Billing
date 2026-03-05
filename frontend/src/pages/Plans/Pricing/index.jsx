@@ -30,9 +30,9 @@ const Pricing = () => {
       try {
         const res = await api.get("/public/plans");
 
-        const mapped = (res.data.plans || []).map((p) => ({
+        const mapped = (res.data.plans || []).map((p,i) => ({
           ...p,
-
+          onChainPlanId: i + 1,
           // frontend UI compatibility
           displayPrice: `$${p.price}`,
           period: `/${p.interval}`,
@@ -81,8 +81,8 @@ const Pricing = () => {
 
       const tx = await subscriptionContract.subscribe(
         plan.merchantWallet,
-        Number(plan.onChainPlanId) || 1,
-        plan.duration,
+        plan.onChainPlanId,
+        // plan.duration,
         {
           value: ethers.parseEther(plan.priceEth),
         },

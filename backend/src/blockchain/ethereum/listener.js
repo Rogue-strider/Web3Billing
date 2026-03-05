@@ -52,22 +52,50 @@ export const startEthereumListeners = () => {
       endTime,
     ) => {
       try {
-        console.log("🟢 Subscribed:", subscriptionId.toString());
+        const subId = subscriptionId.toString();
+
+        console.log("🟢 Subscribed event:", subId);
+
+        /* 🔒 DUPLICATE PROTECTION */
+        const existing = await Subscription.findOne({
+          onChainSubscriptionId: subId,
+        });
+
+        if (existing) {
+          console.log("⚠️ Subscription already synced");
+          return;
+        }
 
         const user = await User.findOne({
           walletAddress: userWallet.toLowerCase(),
         });
-        if (!user) return;
+
+        if (!user) {
+          console.log("User not found:", userWallet);
+          return;
+        }
 
         const merchant = await Merchant.findOne({
           payoutWallet: merchantWallet.toLowerCase(),
         });
-        if (!merchant) return;
+
+        if (!merchant) {
+          console.log("Merchant not found:", merchantWallet);
+          return;
+        }
 
         const plan = await Plan.findOne({
           onChainPlanId: planId.toString(),
         });
-        if (!plan) return;
+
+        if (!plan) {
+          console.log("Plan not found:", planId.toString());
+          return;
+        }
+        if (plan.chain !== "ethereum") {
+          console.log("Skipping non-ethereum plan:", plan.chain);
+          return;
+        }
 
         /* 🔥 Expire old active subscription of same plan */
         await Subscription.updateMany(
@@ -76,7 +104,12 @@ export const startEthereumListeners = () => {
             plan: plan._id,
             status: "active",
           },
-          { status: "expired" },
+          {
+            $set: {
+              status: "expired",
+              cancelAtPeriodEnd: false,
+            },
+          },
         );
 
         /* ✅ Create new subscription */
@@ -89,23 +122,23 @@ export const startEthereumListeners = () => {
           currentPeriodStart: new Date(Number(startTime) * 1000),
           currentPeriodEnd: new Date(Number(endTime) * 1000),
           chain: "ethereum",
-          onChainSubscriptionId: subscriptionId.toString(),
+          onChainSubscriptionId: subId,
         });
 
-        /* 🔥 USER ROOM (wallet based) */
+        /* 🔥 USER ROOM UPDATE */
         io.to(user.walletAddress.toLowerCase()).emit("subscription:created", {
           subscription,
         });
 
-        /* 🔥 UPDATE GLOBAL STATS */
+        /* 🔥 GLOBAL STATS */
         const stats = await getLiveStats();
         io.emit("stats:update", stats);
 
-        /* 🔥 UPDATE CHARTS */
+        /* 🔥 CHARTS UPDATE */
         const charts = await getDashboardCharts("30d");
         io.emit("charts:update", charts);
 
-        /* 🔥 UPDATE MERCHANT DASHBOARD */
+        /* 🔥 MERCHANT DASHBOARD UPDATE */
         const merchantStats = await getMerchantStats(merchant._id);
 
         io.to(merchant.payoutWallet.toLowerCase()).emit(
@@ -113,10 +146,9 @@ export const startEthereumListeners = () => {
           merchantStats,
         );
 
-
-        console.log("✅ Subscription created cleanly");
+        console.log("✅ Subscription synced from blockchain");
       } catch (err) {
-        console.error("❌ Subscribed error:", err.message);
+        console.error("❌ Subscribed listener error:", err.message);
       }
     },
   );
@@ -126,19 +158,24 @@ export const startEthereumListeners = () => {
   ========================= */
   subscriptionContract.on("SubscriptionCancelled", async (subscriptionId) => {
     try {
+      const subId = subscriptionId.toString();
+
       const subscription = await Subscription.findOneAndUpdate(
         {
-          onChainSubscriptionId: subscriptionId.toString(),
+          onChainSubscriptionId: subId,
           status: "active",
         },
         {
           status: "cancelled",
-          cancelAtPeriodEnd: true,
+          cancelAtPeriodEnd: false,
         },
         { new: true },
       );
 
-      if (!subscription) return;
+      if (!subscription) {
+        console.log("Subscription not found for cancel:", subId);
+        return;
+      }
 
       const user = await User.findById(subscription.user);
       const merchant = await Merchant.findById(subscription.merchant);
@@ -148,15 +185,15 @@ export const startEthereumListeners = () => {
         subscription,
       });
 
-      /* 🔥 UPDATE GLOBAL STATS */
+      /* 🔥 GLOBAL STATS */
       const stats = await getLiveStats();
       io.emit("stats:update", stats);
 
-      /* 🔥 UPDATE CHARTS */
+      /* 🔥 CHARTS UPDATE */
       const charts = await getDashboardCharts("30d");
       io.emit("charts:update", charts);
 
-      /* 🔥 UPDATE MERCHANT DASHBOARD */
+      /* 🔥 MERCHANT DASHBOARD UPDATE */
       const merchantStats = await getMerchantStats(merchant._id);
 
       io.to(merchant.payoutWallet.toLowerCase()).emit(
@@ -164,10 +201,9 @@ export const startEthereumListeners = () => {
         merchantStats,
       );
 
-
-      console.log("🔴 Subscription cancelled cleanly");
+      console.log("🔴 Subscription cancelled synced");
     } catch (err) {
-      console.error("❌ Cancel error:", err.message);
+      console.error("❌ Cancel listener error:", err.message);
     }
   });
 };

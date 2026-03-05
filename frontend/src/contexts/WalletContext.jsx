@@ -193,7 +193,7 @@ export const WalletProvider = ({ children }) => {
   const autoConnect = async () => {
     if (!window.ethereum) return;
 
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("accessToken");
     if (!token) return;
 
     try {
