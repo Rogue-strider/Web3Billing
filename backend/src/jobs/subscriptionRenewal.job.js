@@ -17,7 +17,7 @@ export const startSubscriptionRenewalJob = () => {
         if (sub.currentPeriodEnd > now) continue;
 
         // 🔁 mock payment
-        const paymentSuccess = true;
+        const paymentSuccess = sub.chain === "ethereum";
         if (!paymentSuccess) continue;
 
         const newEnd = new Date(sub.currentPeriodEnd);
