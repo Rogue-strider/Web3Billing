@@ -32,7 +32,7 @@ const Pricing = () => {
 
         const mapped = (res.data.plans || []).map((p,i) => ({
           ...p,
-          onChainPlanId: i + 1,
+          onChainPlanId: p.onChainPlanId,
           // frontend UI compatibility
           displayPrice: `$${p.price}`,
           period: `/${p.interval}`,
