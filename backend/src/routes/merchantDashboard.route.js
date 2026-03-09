@@ -37,6 +37,11 @@ router.get("/", protect, async (req, res, next) => {
       merchant: merchant._id,
     });
 
+    const churnRate =
+      totalSubscribers === 0
+        ? 0
+        : ((cancelledSubscribers / totalSubscribers) * 100).toFixed(2);
+
     /* =========================
        TOTAL REVENUE
     ========================= */
@@ -67,6 +72,38 @@ router.get("/", protect, async (req, res, next) => {
     const totalRevenue = revenueAgg[0]?.total || 0;
 
     /* =========================
+      MRR (Monthly Recurring Revenue)
+    ========================= */
+
+    const mrrAgg = await Subscription.aggregate([
+      {
+        $match: {
+          merchant: merchant._id,
+          status: "active",
+          cancelAtPeriodEnd: false,
+        },
+      },
+      {
+        $lookup: {
+          from: "plans",
+          localField: "plan",
+          foreignField: "_id",
+          as: "plan",
+        },
+      },
+      { $unwind: "$plan" },
+      {
+        $group: {
+          _id: null,
+          mrr: { $sum: "$plan.price" },
+        },
+      },
+    ]);
+
+    const mrr = mrrAgg[0]?.mrr || 0;
+
+    
+    /* =========================
        PLANS + PLAN WISE STATS
     ========================= */
     const plans = await Plan.find({ merchant: merchant._id });
@@ -96,7 +133,7 @@ router.get("/", protect, async (req, res, next) => {
     const recentSubscriptions = await Subscription.find({
       merchant: merchant._id,
     })
-      .populate("plan", "name price")
+      .populate("plan", "name price interval")
       .populate("user", "walletAddress")
       .sort({ createdAt: -1 })
       .limit(10);
@@ -114,10 +151,12 @@ router.get("/", protect, async (req, res, next) => {
       },
       stats: {
         totalRevenue,
+        mrr,
         activeSubscribers,
         cancelledSubscribers,
         totalSubscribers,
         totalPlans: plans.length,
+        churnRate,
       },
       plans,
       planStats,
