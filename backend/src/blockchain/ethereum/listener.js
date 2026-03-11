@@ -14,7 +14,7 @@ const getMerchantStats = async (merchantId) => {
   const subs = await Subscription.find({
     merchant: merchantId,
     status: "active",
-    cancelAtPeriodEnd: false,
+    // cancelAtPeriodEnd: false,
   }).populate("plan");
 
   const activeSubs = subs.length;

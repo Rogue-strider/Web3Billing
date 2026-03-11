@@ -18,7 +18,7 @@ export const getDashboardCharts = async (range = "30d") => {
       $match: {
         status: "active",
         cancelAtPeriodEnd: false,
-        createdAt: { $gte: fromDate },
+        currentPeriodStart: { $gte: fromDate },
       },
     },
     {
@@ -36,7 +36,7 @@ export const getDashboardCharts = async (range = "30d") => {
           date: {
             $dateToString: {
               format: "%Y-%m-%d",
-              date: "$createdAt",
+              date: "$currentPeriodStart",
             },
           },
         },
@@ -61,7 +61,7 @@ export const getDashboardCharts = async (range = "30d") => {
           date: {
             $dateToString: {
               format: "%Y-%m-%d",
-              date: "$createdAt",
+              date: "$currentPeriodStart",
             },
           },
         },

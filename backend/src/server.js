@@ -23,6 +23,7 @@ import { startEthereumListeners } from "./blockchain/ethereum/listener.js";
 import { getDashboardCharts } from "./services/charts.service.js";
 import merchantPlansRoutes from "./routes/merchantPlans.route.js";
 import publicPlansRoutes from "./routes/publicPlans.route.js";
+import { getLiveStats } from "./services/stats.service.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -35,8 +36,15 @@ export const io = new Server(server, {
   },
 });
 
-io.on("connection", (socket) => {
+io.on("connection", async (socket) => {
   console.log("🟢 Socket connected:", socket.id);
+
+  /* INITIAL DASHBOARD DATA */
+  const stats = await getLiveStats();
+  socket.emit("stats:update", stats);
+
+  const charts = await getDashboardCharts("30d");
+  socket.emit("charts:update", charts);
 
   /* USER JOIN ROOM */
   socket.on("join", (userId) => {

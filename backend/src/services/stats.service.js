@@ -1,30 +1,39 @@
 import Subscription from "../models/Subscription.model.js";
-import mongoose from "mongoose";
 
 export const getLiveStats = async () => {
   /* =========================
      ACTIVE SUBSCRIBERS
-     (sirf truly active)
   ========================= */
+
   const activeSubscribers = await Subscription.countDocuments({
     status: "active",
-    cancelAtPeriodEnd: false,
   });
 
   /* =========================
-     MRR (Monthly Recurring Revenue)
-     only active + non-cancelling
+     TOTAL SUBSCRIPTIONS
   ========================= */
-  const mrrAgg = await Subscription.aggregate([
+
+  const totalSubscriptions = await Subscription.countDocuments();
+
+  /* =========================
+     CHURNED SUBSCRIPTIONS
+  ========================= */
+
+  const churnedSubscriptions = await Subscription.countDocuments({
+    status: { $in: ["cancelled", "expired"] },
+  });
+
+  /* =========================
+     REVENUE + MRR
+  ========================= */
+
+  const revenueAgg = await Subscription.aggregate([
     {
-      $match: {
-        status: "active",
-        cancelAtPeriodEnd: false,
-      },
+      $match: { status: "active" },
     },
     {
       $lookup: {
-        from: "plans", // Plan collection
+        from: "plans",
         localField: "plan",
         foreignField: "_id",
         as: "plan",
@@ -34,25 +43,18 @@ export const getLiveStats = async () => {
     {
       $group: {
         _id: null,
-        totalMRR: { $sum: "$plan.price" },
+        totalRevenue: { $sum: "$plan.price" },
+        mrr: { $sum: "$plan.price" },
       },
     },
   ]);
 
-  const mrr = mrrAgg[0]?.totalMRR || 0;
+  const totalRevenue = revenueAgg[0]?.totalRevenue || 0;
+  const mrr = revenueAgg[0]?.mrr || 0;
 
   /* =========================
-     TOTAL SUBSCRIPTIONS (ever)
+     CHURN RATE
   ========================= */
-  const totalSubscriptions = await Subscription.countDocuments();
-
-  /* =========================
-     CHURNED SUBSCRIPTIONS
-     (cancelled OR expired)
-  ========================= */
-  const churnedSubscriptions = await Subscription.countDocuments({
-    status: { $in: ["cancelled", "expired"] },
-  });
 
   const churnRate =
     totalSubscriptions === 0
@@ -60,6 +62,7 @@ export const getLiveStats = async () => {
       : Number(((churnedSubscriptions / totalSubscriptions) * 100).toFixed(2));
 
   return {
+    totalRevenue,
     activeSubscribers,
     mrr,
     churnRate,
