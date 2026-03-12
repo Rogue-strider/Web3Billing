@@ -185,6 +185,16 @@ export const startEthereumListeners = () => {
         { new: true },
       );
 
+      
+
+      if (!subscription) {
+        console.log("Subscription not found for cancel:", subId);
+        return;
+      }
+
+      const user = await User.findById(subscription.user);
+      const merchant = await Merchant.findById(subscription.merchant);
+
       await sendWebhook({
         url: merchant.webhookUrl,
         event: "subscription.cancelled",
@@ -194,14 +204,6 @@ export const startEthereumListeners = () => {
           plan: subscription.plan,
         },
       });
-
-      if (!subscription) {
-        console.log("Subscription not found for cancel:", subId);
-        return;
-      }
-
-      const user = await User.findById(subscription.user);
-      const merchant = await Merchant.findById(subscription.merchant);
 
       /* 🔥 USER UPDATE */
       io.to(user.walletAddress.toLowerCase()).emit("subscription:cancelled", {
