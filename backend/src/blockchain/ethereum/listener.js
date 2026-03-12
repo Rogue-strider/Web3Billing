@@ -6,6 +6,7 @@ import Merchant from "../../models/Merchant.model.js";
 import { io } from "../../server.js";
 import { getLiveStats } from "../../services/stats.service.js";
 import { getDashboardCharts } from "../../services/charts.service.js";
+import { sendWebhook } from "../../services/webhook.service.js";
 
 /* =========================
    🔥 MERCHANT STATS HELPER
@@ -125,6 +126,18 @@ export const startEthereumListeners = () => {
           onChainSubscriptionId: subId,
         });
 
+        await sendWebhook({
+          url: merchant.webhookUrl,
+          event: "subscription.created",
+          payload: {
+            subscriptionId: subscription._id,
+            user: user.walletAddress,
+            plan: plan.name,
+            price: plan.price,
+            chain: plan.chain,
+          },
+        });
+
         /* 🔥 USER ROOM UPDATE */
         io.to(user.walletAddress.toLowerCase()).emit("subscription:created", {
           subscription,
@@ -171,6 +184,16 @@ export const startEthereumListeners = () => {
         },
         { new: true },
       );
+
+      await sendWebhook({
+        url: merchant.webhookUrl,
+        event: "subscription.cancelled",
+        payload: {
+          subscriptionId: subscription._id,
+          user: user.walletAddress,
+          plan: subscription.plan,
+        },
+      });
 
       if (!subscription) {
         console.log("Subscription not found for cancel:", subId);
