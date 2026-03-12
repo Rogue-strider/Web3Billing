@@ -1,3 +1,5 @@
+CURRENTLY IN DEVELOPING PHASE
+
 # 🚀 Web3Billing — Crypto Subscription Platform
 
 > **"The Stripe for Web3 Subscriptions"**
