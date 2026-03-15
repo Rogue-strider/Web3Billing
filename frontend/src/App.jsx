@@ -6,6 +6,7 @@ import Pricing from "./pages/Plans/Pricing";
 import MerchantDashboard from "./pages/merchant/Dashboard";
 import MerchantPlans from "./pages/merchant/Plans";
 import CreatePlan from "./pages/merchant/createPlan";
+import Webhooks from "./pages/merchant/Webhooks";
 
 function NotFoundPage() {
   return (
@@ -42,6 +43,7 @@ function App() {
           <Route path="/merchant/dashboard" element={<MerchantDashboard />} />
           <Route path="/merchant/plans" element={<MerchantPlans />} />
           <Route path="/merchant/plans/create" element={<CreatePlan />} />
+          <Route path="/merchant/webhooks" element={<Webhooks />} />
           {/* <Route path="/pricing" element={<Pricing />} /> */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>

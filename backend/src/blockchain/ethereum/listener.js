@@ -128,6 +128,7 @@ export const startEthereumListeners = () => {
 
         await sendWebhook({
           url: merchant.webhookUrl,
+          merchantId: merchant._id,
           event: "subscription.created",
           payload: {
             subscriptionId: subscription._id,
@@ -197,6 +198,7 @@ export const startEthereumListeners = () => {
 
       await sendWebhook({
         url: merchant.webhookUrl,
+        merchantId: merchant._id,
         event: "subscription.cancelled",
         payload: {
           subscriptionId: subscription._id,

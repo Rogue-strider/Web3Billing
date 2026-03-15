@@ -9,6 +9,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { updateWebhook } from "../controllers/merchant.controller.js";
 import { protect } from "../middleware/auth.middleware.js";
 import Merchant from "../models/Merchant.model.js";
+import WebhookEvent from "../models/WebhookEvent.model.js";
 
 const router = Router();
 
@@ -72,6 +73,39 @@ router.get("/me", authenticate, authorize("merchant"), async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
+/* =========================
+   MERCHANT WEBHOOK EVENTS
+========================= */
+
+router.get(
+  "/webhooks",
+  authenticate,
+  authorize("merchant"),
+  async (req, res) => {
+    try {
+
+      const merchant = await Merchant.findOne({ user: req.user._id });
+
+      if (!merchant) {
+        return res.status(404).json({ message: "Merchant not found" });
+      }
+
+      const events = await WebhookEvent.find({
+        merchant: merchant._id,
+      })
+        .sort({ createdAt: -1 })
+        .limit(50);
+
+      res.json({
+        events,
+      });
+
+    } catch (err) {
+      res.status(500).json({ message: "Server error" });
+    }
+  }
+);
 
 export default router;
 
