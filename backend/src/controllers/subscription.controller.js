@@ -27,7 +27,7 @@ export const createSubscription = async (req, res) => {
   await Subscription.updateMany(
     {
       user: req.user._id,
-      plan: plan._id, 
+      plan: plan._id,
       status: "active",
     },
     {
@@ -62,13 +62,23 @@ export const createSubscription = async (req, res) => {
     chain: plan.chain,
     onChainSubscriptionId: Date.now().toString(),
   });
-
+  await sendWebhook({
+    url: merchant.webhookUrl,
+    merchantId: merchant._id,
+    event: WEBHOOK_EVENTS.SUBSCRIPTION_CREATED,
+    payload: {
+      subscriptionId: subscription._id,
+      user: req.user.walletAddress,
+      plan: plan.name,
+      price: plan.price,
+      chain: plan.chain,
+    },
+  });
   res.status(201).json({
     message: "Subscription created",
     subscription,
   });
 };
-
 
 /* =====================================================
    GET MY SUBSCRIPTIONS
@@ -79,7 +89,7 @@ export const getMySubscriptions = async (req, res) => {
 
     const subs = await Subscription.find({
       user: req.user._id,
-      currentPeriodEnd: { $gt: now }, 
+      currentPeriodEnd: { $gt: now },
       status: "active",
     })
       .sort({ createdAt: -1 })
@@ -124,7 +134,18 @@ export const cancelSubscription = async (req, res) => {
 
     subscription.cancelAtPeriodEnd = true;
     await subscription.save();
+    const merchant = await Merchant.findById(subscription.merchant);
 
+    await sendWebhook({
+      url: merchant.webhookUrl,
+      merchantId: merchant._id,
+      event: WEBHOOK_EVENTS.SUBSCRIPTION_CANCELLED,
+      payload: {
+        subscriptionId: subscription._id,
+        user: req.user.walletAddress,
+        plan: subscription.plan,
+      },
+    });
     res.json({
       message: "Subscription will cancel at period end",
     });
